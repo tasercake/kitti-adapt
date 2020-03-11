@@ -231,9 +231,9 @@ def run():
     batch_size = 2
     transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                                                                 std=[0.229, 0.224, 0.225])])
-    img_directory = "vKitti_RGB/Scene01/15-deg-left/frames/rgb/Camera_0/"
+    img_directory = "../data/vKitti_RGB/Scene01/15-deg-left/frames/rgb/Camera_0/"
 
-    label_directory = "VKitti_classSeg/Scene01/15-deg-left/frames/classSegmentation/Camera_0/"
+    label_directory = "../data/VKitti_classSeg/Scene01/15-deg-left/frames/classSegmentation/Camera_0/"
     # label_directory = "vKitti_RGB/Scene18/15-deg-left/frames/rgb/Camera_0/rgb_00000.jpg"
     model = models.segmentation.fcn_resnet50(pretrained=False, progress=True, num_classes=2, aux_loss=None)
     dataloader = DataLoader_vkitti(model, img_directory, label_directory, batch_size, transform)
