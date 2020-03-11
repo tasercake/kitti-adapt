@@ -11,8 +11,8 @@ def depth_read(filename):
 
     depth_png = np.array(Image.open(filename), dtype=int)
     # make sure we have a proper 16bit depth map here.. not 8bit!
-    assert(np.max(depth_png) > 255)
+    assert np.max(depth_png) > 255
 
-    depth = depth_png.astype(np.float) / 256.
-    depth[depth_png == 0] = -1.
+    depth = depth_png.astype(np.float) / 256.0
+    depth[depth_png == 0] = -1.0
     return depth
