@@ -1,6 +1,8 @@
+import os
 from pathlib import Path
 from glob import glob
 from natsort import natsorted
+import itertools
 
 import numpy as np
 from PIL import Image
@@ -10,7 +12,7 @@ from torch.utils.data import Dataset
 
 
 class VkittiImageDataSet(Dataset):
-    def __init__(self, vkitti_dir, subsets=("rgb",), transforms: dict = None):
+    def __init__(self, vkitti_dir, subsets=("rgb",), transforms: dict = None, limit=None):
         """
         """
         if not len(subsets):
@@ -19,22 +21,27 @@ class VkittiImageDataSet(Dataset):
         self.vkitti_dir = Path(vkitti_dir)
         self.subsets = subsets
         self.transforms = transforms or {}
+        self.limit = limit
 
         # Load filenames and check dataset integrity
         # TODO: convert these prints to logging statements
         path_templates = []
         for subset in self.subsets:
-            templates = {
-                f
-                for f in self.vkitti_dir.joinpath(subset).rglob(f"**/*")
-                if f.is_file()
-            }  # Recursively get files in subset
-            templates = map(
-                lambda f: str(f).replace(subset, "{subset}"), templates
-            )  # Replace subset name with templating brackets
-            templates = set(
-                map(lambda f: Path(f).with_suffix(""), templates)
-            )  # Remove extension
+            # Recursively get files in subset
+            templates = [f for f in glob(
+                os.path.join(str(self.vkitti_dir), subset, "**/*"),
+                recursive=True,
+            )]
+            # Filter files only
+            templates = filter(os.path.isfile, templates)
+            if self.limit:
+                templates = itertools.islice(templates, self.limit)
+            # Replace subset name with templating brackets
+            templates = map(lambda f: f.replace(subset, "{subset}"), templates)
+            # Remove extension
+            templates = map(lambda f: Path(f).with_suffix(""), templates)
+            # Iterate over generator and create concrete set
+            templates = set(templates)
             path_templates.append(templates)
             print(f"Subset '{subset}' contains {len(templates)} files")
         if len(self.subsets) > 1:
@@ -55,7 +62,7 @@ class VkittiImageDataSet(Dataset):
         self.path_templates = natsorted(self.path_templates)
         print(f"Found a total of {len(self.path_templates)} valid files.")
 
-    def __getitem__(self, idx):
+    def get(self, idx, transform=False):
         template = self.path_templates[idx]
         sample = {}
         for subset in self.subsets:
@@ -64,8 +71,13 @@ class VkittiImageDataSet(Dataset):
             if not path:
                 raise ValueError(f"Could not find file matching '{path}'.")
             data = self._load_file(path[0], subset)
+            if transform and subset in self.transforms:
+                data = self.transforms[subset](data)
             sample[subset] = data
         return sample
+
+    def __getitem__(self, idx):
+        return self.get(idx, transform=True)
 
     def _load_file(self, path, subset):
         """
@@ -75,11 +87,7 @@ class VkittiImageDataSet(Dataset):
             data = Image.open(path)
         elif subset == "depth":
             data = Image.open(path)
-#             data = cv2.imread(path, cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH).astype(
-#                 np.float32
-#             )
-        if subset in self.transforms:
-            data = self.transforms[subset](data)
+            # data = cv2.imread(path, cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH).astype(np.float32)
         return data
 
     def __len__(self):
