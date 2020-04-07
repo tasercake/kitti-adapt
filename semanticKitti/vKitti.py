@@ -30,10 +30,12 @@ def run():
     f = open('colors.txt','r')
     color_dic = {}
     num_class = 0
+    desired_classes = ['Car', 'TrafficLight', 'TrafficSign', 'Pole', 'GuardRail', 'Vegetation', 'Terrain', 'Undefined', 'Sky', 'Road']
     for line in f:
         cat,r,g,b = line.split()
-        color_dic[cat] = [r,g,b]
-        num_class += 1
+        for cat in desired_classes:
+            color_dic[cat] = [r,g,b]
+            num_class += 1
     print(num_class)
     batch_size = 2
     transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize(mean=[0.485, 0.456, 0.406],

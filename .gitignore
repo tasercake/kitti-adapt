@@ -130,3 +130,5 @@ dmypy.json
 
 data/
 semanticKitti/lightning_logs
+semanticKitti/.idea/inspectionProfiles/Project_Default.xml
+semanticKitti/.idea/workspace.xml
