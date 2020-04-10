@@ -24,11 +24,11 @@ class DataLoader_kitti(pl.LightningModule):
         desired_r_train_size = self.rdataset_length * 0.6 * (1 - virtual_data_ratio)
         desired_r_val_size = self.rdataset_length * 0.2 * (1 - virtual_data_ratio)
         desired_r_test_size = self.rdataset_length * 0.2
-        self.rtrain_sampler, self.rval_sampler, self.rtest_sampler = self.split_data_fixed_sample_3set(rdataset,desired_r_train_size,desired_r_val_size,desired_r_test_size)
+        self.rtrain_indices, self.rval_indices, self.rtest_indices = self.split_data_return_indices_3(rdataset, desired_r_train_size,desired_r_val_size,desired_r_test_size)
 
         desired_v_train_size = (self.rdataset_length * 0.6) * virtual_data_ratio
         desired_v_val_size = (self.rdataset_length * 0.2) * virtual_data_ratio
-        self.vtrain_sampler,self.vval_sampler = self.split_data_fixed_sample(self.vdataset_length,desired_v_train_size,desired_v_val_size)
+        self.vtrain_indices,self.vval_indices = self.split_data_return_indices_2(self.vdataset_length,desired_v_train_size,desired_v_val_size)
 
 
 
@@ -59,18 +59,18 @@ class DataLoader_kitti(pl.LightningModule):
 
         return set1_sample,set2_sample,set3_indices
 
-    def split_data_fixed_sample(self,dataset_size,sample_size1,sample_size2,seed=1337):
+    def split_data_return_indices_2(self,dataset_size,sample_size1,sample_size2,seed=1337):
         indices = list(range(dataset_size))
         sample2_end_index = sample_size1 + sample_size2
         if 1:
             np.random.seed(seed)
             np.random.shuffle(indices)
         set1_indices, set2_indices = indices[:sample_size1], indices[sample_size1:sample2_end_index]
-        set1_sample = torch.utils.data.sampler.SubsetRandomSampler(set1_indices)
-        set2_sample = torch.utils.data.sampler.SubsetRandomSampler(set2_indices)
-        return set1_sample,set2_sample
+        # set1_sample = torch.utils.data.sampler.SubsetRandomSampler(set1_indices)
+        # set2_sample = torch.utils.data.sampler.SubsetRandomSampler(set2_indices)
+        return set1_indices,set2_indices
 
-    def split_data_fixed_sample_3set(self,dataset_size,sample_size1,sample_size2,sample_size3,seed=1337):
+    def split_data_return_indices_3(self,dataset_size,sample_size1,sample_size2,sample_size3,seed=1337):
         indices = list(range(dataset_size))
         sample2_end_index = sample_size1 + sample_size2
         sample3_end_index = sample2_end_index + sample_size3
@@ -78,10 +78,10 @@ class DataLoader_kitti(pl.LightningModule):
             np.random.seed(seed)
             np.random.shuffle(indices)
         set1_indices, set2_indices, set3_indices = indices[:sample_size1], indices[sample_size1:sample2_end_index], indices[sample2_end_index:sample3_end_index]
-        set1_sample = torch.utils.data.sampler.SubsetRandomSampler(set1_indices)
-        set2_sample = torch.utils.data.sampler.SubsetRandomSampler(set2_indices)
-        set3_sample = torch.utils.data.sampler.SubsetRandomSampler(set3_indices)
-        return set1_sample,set2_sample, set3_sample
+        # set1_sample = torch.utils.data.sampler.SubsetRandomSampler(set1_indices)
+        # set2_sample = torch.utils.data.sampler.SubsetRandomSampler(set2_indices)
+        # set3_sample = torch.utils.data.sampler.SubsetRandomSampler(set3_indices)
+        return set1_indices,set2_indices, set3_indices
 
     def split_data(self,dataset,split_ratio1,seed=1337):
         dataset_size = len(dataset)
@@ -98,12 +98,12 @@ class DataLoader_kitti(pl.LightningModule):
 
 
     def prepare_data(self):
-        vtrain_dataset = torch.utils.data.Subset(self.vdataset, self.vtrain_sampler)
-        vval_dataset = torch.utils.data.Subset(self.vdataset, self.vval_sampler)
+        vtrain_dataset = torch.utils.data.Subset(self.vdataset, self.vtrain_indices)
+        vval_dataset = torch.utils.data.Subset(self.vdataset, self.vval_indices)
 
-        rtrain_dataset = torch.utils.data.Subset(self.vdataset, self.rtrain_sampler)
-        rval_dataset = torch.utils.data.Subset(self.vdataset, self.rval_sampler)
-        rtest_dataset = torch.utils.data.Subset(self.vdataset, self.rtest_sampler)
+        rtrain_dataset = torch.utils.data.Subset(self.vdataset, self.rtrain_indices)
+        rval_dataset = torch.utils.data.Subset(self.vdataset, self.rval_indices)
+        rtest_dataset = torch.utils.data.Subset(self.vdataset, self.rtest_indices)
 
         training_dataset = torch.utils.data.ConcatDataset([vtrain_dataset,rtrain_dataset])
         validation_dataset = torch.utils.data.ConcatDataset([vval_dataset,rval_dataset])
