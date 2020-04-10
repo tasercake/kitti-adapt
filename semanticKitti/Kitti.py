@@ -29,7 +29,7 @@ def run():
     #     print('xxx')
 
     ## Processing vColors.txt which contains the rgb values for the segmented image
-    f = open('VirtualData/vColors.txt','r')
+    f = open('vColors.txt','r')
     virtual_color_dic = {}
     virtual_num_class = 0
     desired_classes = ['Car', 'TrafficLight', 'TrafficSign', 'Pole', 'GuardRail', 'Vegetation', 'Terrain', 'Undefined', 'Sky', 'Road']
@@ -40,7 +40,7 @@ def run():
             virtual_num_class += 1
 
     ### Processing rColors_org.txt which contains the rgb values for the segmented image
-    f = open('RealData/rColors.txt','r')
+    f = open('rColors.txt','r')
     real_color_dic = {}
     real_num_class = 0
     desired_classes = ['Car', 'TrafficLight', 'TrafficSign', 'Pole', 'GuardRail', 'Vegetation', 'Terrain', 'Undefined', 'Sky', 'Road']
@@ -53,12 +53,16 @@ def run():
     batch_size = 2
     transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                                                                 std=[0.229, 0.224, 0.225])])
-    img_directory = "../data/vKitti_RGB/Scene01/15-deg-left/frames/rgb/Camera_0/test/"
-    label_directory = "../data/VKitti_classSeg/Scene01/15-deg-left/frames/classSegmentation/Camera_0/test/"
     model = models.segmentation.fcn_resnet50(pretrained=False, progress=True, num_classes=16, aux_loss=None)
-    virtual_kitti_dataset = KittiDataset(img_directory, label_directory,virtual_color_dic,transform)
-    real_kitti_dataset = KittiDataset(img_directory, label_directory,real_color_dic,transform)
-    dataloader = DataLoader_kitti(real_kitti_dataset, virtual_kitti_dataset, model, batch_size)
+
+    vir_img_directory = "../data/vKitti_RGB/Scene01/15-deg-left/frames/rgb/Camera_0/"
+    vir_label_directory = "../data/VKitti_classSeg/Scene01/15-deg-left/frames/classSegmentation/Camera_0/"
+    virtual_kitti_dataset = KittiDataset(vir_img_directory, vir_label_directory,virtual_color_dic,transform)
+
+    real_img_directory = "../data/data_semantics/training/image_2/"
+    real_label_directory = "../data/data_semantics/training/semantic_rgb/"
+    real_kitti_dataset = KittiDataset(real_img_directory, real_label_directory,real_color_dic,transform)
+    dataloader = DataLoader_kitti(real_kitti_dataset, virtual_kitti_dataset, model, batch_size,0.5)
     # vdataloader = DataLoader_kitti(real_kitti_dataset, model, batch_size)
     trainer = pl.Trainer(gpus=0)
     trainer.fit(dataloader)
