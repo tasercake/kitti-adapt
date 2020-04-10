@@ -23,7 +23,6 @@ class KittiDataset(Dataset):
 
         self.seg_images, self.seg_attatched_filenames,self.seg_image_filename = self.load_images_from_folder(label_dir)
         self.seg_images = self.standardise_image_dims(label_dir)
-        print(len(self.image_filename))
         self.img_dir = img_dir
         self.label_dir = label_dir
 
@@ -32,7 +31,7 @@ class KittiDataset(Dataset):
         self.tensor_transform = transforms.Compose([transforms.ToTensor()])
 
     def __len__(self):
-        return len(self.image_filename)
+        return len(self.org_image_filename)
 
     def load_images_from_folder(self,folder):
         images = []
