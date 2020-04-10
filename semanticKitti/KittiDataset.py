@@ -17,10 +17,10 @@ class KittiDataset(Dataset):
         :param transform:
         """
 #        self.label_dir = label_dir
-        print("init kitti dataset")
+#         print("init kitti dataset")
+        self.img_dir = img_dir
         self.org_images, self.org_attatched_filenames,self.org_image_filename = self.load_images_from_folder(img_dir)
         self.org_images = self.standardise_image_dims(label_dir)
-
         self.seg_images, self.seg_attatched_filenames,self.seg_image_filename = self.load_images_from_folder(label_dir)
         self.seg_images = self.standardise_image_dims(label_dir)
         self.img_dir = img_dir
@@ -31,17 +31,18 @@ class KittiDataset(Dataset):
         self.tensor_transform = transforms.Compose([transforms.ToTensor()])
 
     def __len__(self):
-        return len(self.org_image_filename)
+        return len(self.org_images)
 
     def load_images_from_folder(self,folder):
         images = []
         filenames = []
         for filename in os.listdir(folder):
             img = cv2.imread(os.path.join(folder,filename))
-            if ".png" in filename:
+            if ".png" or ".jpg" in filename:
+                # print(filename)
                 filenames.append(filename)
             if img is not None:
-                if ".png" in filename:
+                if ".png" or ".jpg" in filename:
                     images.append(img)
         attatched_filenames = list(zip(filenames,images))
         return images, attatched_filenames, filenames
@@ -66,9 +67,9 @@ class KittiDataset(Dataset):
             sizeD[size] = sizels
 
         # print(uSizes)
-        for thing in sizeD:
-            print(thing)
-            print(sizeD[thing])
+        # for thing in sizeD:
+        #     print(thing)
+        #     print(sizeD[thing])
         return sizeD, attatched_filenames
 
     def standardise_image_dims(self,img_directory):
@@ -84,7 +85,7 @@ class KittiDataset(Dataset):
         for badfilename in no:
             badfile = attatched_filenames_d[badfilename]
             newfile = cv2.resize(badfile, (selected_dims[1], selected_dims[0]), interpolation=cv2.INTER_AREA)
-            print(badfile.shape, newfile.shape)
+            # print(badfile.shape, newfile.shape)
             attatched_filenames_d[badfilename] = newfile
         corrected_images = list(attatched_filenames_d.values())
         return attatched_filenames_d
@@ -107,7 +108,6 @@ class KittiDataset(Dataset):
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
-
         # Reading RGB Image
         org_img_name = self.org_image_filename[idx]
         org_resized_img = self.org_images[org_img_name]
@@ -121,5 +121,6 @@ class KittiDataset(Dataset):
         if self.transforms is not None:
             img = self.transforms(org_resized_img)
 
-
+        # print('img shape',img.shape)
+        # print('img seg_all_masks',seg_all_masks.shape)
         return img, seg_all_masks

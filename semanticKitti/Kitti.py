@@ -17,11 +17,11 @@ from KittiDataloader import DataLoader_kitti
 from KittiDataset import KittiDataset
 
 def run():
-    # if torch.cuda.is_available():
-    #     dev = "cuda:0"
-    # else:
-    #     dev = "cpu"
-    # device = torch.device(dev)
+    if torch.cuda.is_available():
+        dev = "cuda:0"
+    else:
+        dev = "cpu"
+    device = torch.device(dev)
     # img = cv2.imread('../data/VKitti_classSeg/Scene01/15-deg-left/frames/classSegmentation/Camera_0/classgt_00000.png',-1)
     # print(img.shape)
     # unique_arr = np.unique(img.reshape(-1, img.shape[2]), axis=0)
@@ -53,17 +53,20 @@ def run():
     batch_size = 2
     transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                                                                 std=[0.229, 0.224, 0.225])])
-    model = models.segmentation.fcn_resnet50(pretrained=False, progress=True, num_classes=16, aux_loss=None)
+    model = models.segmentation.fcn_resnet50(pretrained=False, progress=True, num_classes=real_num_class, aux_loss=None)
 
-    vir_img_directory = "../data/vKitti_RGB/Scene01/15-deg-left/frames/rgb/Camera_0/"
-    vir_label_directory = "../data/VKitti_classSeg/Scene01/15-deg-left/frames/classSegmentation/Camera_0/"
+    print('Reading Virtual Data')
+    vir_img_directory = "../data/vKitti_RGB/Scene01/15-deg-left/frames/rgb/Camera_1/"
+    vir_label_directory = "../data/VKitti_classSeg/Scene01/15-deg-left/frames/classSegmentation/Camera_1/"
     virtual_kitti_dataset = KittiDataset(vir_img_directory, vir_label_directory,virtual_color_dic,transform)
 
+    print('Reading Real Data')
     real_img_directory = "../data/data_semantics/training/image_2/"
     real_label_directory = "../data/data_semantics/training/semantic_rgb/"
     real_kitti_dataset = KittiDataset(real_img_directory, real_label_directory,real_color_dic,transform)
-    dataloader = DataLoader_kitti(real_kitti_dataset, virtual_kitti_dataset, model, batch_size,0.5)
-    # vdataloader = DataLoader_kitti(real_kitti_dataset, model, batch_size)
+
+    print('Creating Dataloader')
+    dataloader = DataLoader_kitti(real_kitti_dataset, virtual_kitti_dataset, model, batch_size,0.8,10)
     trainer = pl.Trainer(gpus=0)
     trainer.fit(dataloader)
 
