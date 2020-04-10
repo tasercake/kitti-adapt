@@ -6,18 +6,31 @@ from torch.utils.data import DataLoader, random_split, Dataset, TensorDataset
 from torch.optim import Adam
 import numpy as np, os, sys
 
-
-
-
-class DataLoader_vkitti(pl.LightningModule):
-    def __init__(self, dataset, model, batch_size,val_split = 0.1,test_split = 0.1):
-        super(DataLoader_vkitti,self).__init__()
-        self.dataset = dataset
+class DataLoader_kitti(pl.LightningModule):
+    def __init__(self,rdataset, vdataset, model, batch_size,virtual_data_ratio):
+        super(DataLoader_kitti,self).__init__()
+        self.vdataset = vdataset
+        self.rdataset = rdataset
         self.batch_size = batch_size
 
         ### Ratio for splitting data into the different sets
-        self.val_split = val_split
-        self.test_split = test_split
+        self.virtual_ratio = virtual_data_ratio
+        self.rdataset_length = len(rdataset)
+        self.vdataset_length = len(vdataset)
+
+        ### 60% of data used for testing, 20% for validation and 20% for testing (For 100% real data),
+        # with synthetic data, amount of data used for testing remains the same while ratio for training and validation set changes.
+        # rtrain_sampler, rval_sampler, rtest_sampler = self.split_data_3set(self.rdataset, 0.6,0.8)
+        desired_r_train_size = self.rdataset_length * 0.6 * (1 - virtual_data_ratio)
+        desired_r_val_size = self.rdataset_length * 0.2 * (1 - virtual_data_ratio)
+        desired_r_test_size = self.rdataset_length * 0.2
+        self.rtrain_sampler, self.rval_sampler, self.rtest_sampler = self.split_data_fixed_sample_3set(rdataset,desired_r_train_size,desired_r_val_size,desired_r_test_size)
+
+        desired_v_train_size = (self.rdataset_length * 0.6) * virtual_data_ratio
+        desired_v_val_size = (self.rdataset_length * 0.2) * virtual_data_ratio
+        self.vtrain_sampler,self.vval_sampler = self.split_data_fixed_sample(self.vdataset_length,desired_v_train_size,desired_v_val_size)
+
+
 
         self.train_loader = 0
         self.val_loader = 0
@@ -31,7 +44,7 @@ class DataLoader_vkitti(pl.LightningModule):
         x = self.feature_extractor(x)['out']
         return x
 
-    def split_data(self,dataset,split_ratio1,split_ratio2,seed=1337):
+    def split_data_3set(self,dataset,split_ratio1,split_ratio2,seed=1337):
         dataset_size = len(dataset)
         indices = list(range(dataset_size))
         split_1 = int(np.floor(split_ratio1 * dataset_size))
@@ -46,14 +59,57 @@ class DataLoader_vkitti(pl.LightningModule):
 
         return set1_sample,set2_sample,set3_indices
 
+    def split_data_fixed_sample(self,dataset_size,sample_size1,sample_size2,seed=1337):
+        indices = list(range(dataset_size))
+        sample2_end_index = sample_size1 + sample_size2
+        if 1:
+            np.random.seed(seed)
+            np.random.shuffle(indices)
+        set1_indices, set2_indices = indices[:sample_size1], indices[sample_size1:sample2_end_index]
+        set1_sample = torch.utils.data.sampler.SubsetRandomSampler(set1_indices)
+        set2_sample = torch.utils.data.sampler.SubsetRandomSampler(set2_indices)
+        return set1_sample,set2_sample
+
+    def split_data_fixed_sample_3set(self,dataset_size,sample_size1,sample_size2,sample_size3,seed=1337):
+        indices = list(range(dataset_size))
+        sample2_end_index = sample_size1 + sample_size2
+        sample3_end_index = sample2_end_index + sample_size3
+        if 1:
+            np.random.seed(seed)
+            np.random.shuffle(indices)
+        set1_indices, set2_indices, set3_indices = indices[:sample_size1], indices[sample_size1:sample2_end_index], indices[sample2_end_index:sample3_end_index]
+        set1_sample = torch.utils.data.sampler.SubsetRandomSampler(set1_indices)
+        set2_sample = torch.utils.data.sampler.SubsetRandomSampler(set2_indices)
+        set3_sample = torch.utils.data.sampler.SubsetRandomSampler(set3_indices)
+        return set1_sample,set2_sample, set3_sample
+
+    def split_data(self,dataset,split_ratio1,seed=1337):
+        dataset_size = len(dataset)
+        indices = list(range(dataset_size))
+        split_1 = int(np.floor(split_ratio1 * dataset_size))
+        if 1:
+            np.random.seed(seed)
+            np.random.shuffle(indices)
+        set1_indices, set2_indices = indices[:split_1], indices[split_1:]
+        set1_sample = torch.utils.data.sampler.SubsetRandomSampler(set1_indices)
+        set2_sample = torch.utils.data.sampler.SubsetRandomSampler(set2_indices)
+
+        return set1_sample,set2_sample
+
+
     def prepare_data(self):
-        train_sampler,val_sampler,test_sampler = self.split_data(self.dataset, 0.6, 0.8)
+        vtrain_dataset = torch.utils.data.Subset(self.vdataset, self.vtrain_sampler)
+        vval_dataset = torch.utils.data.Subset(self.vdataset, self.vval_sampler)
 
-        self.train_loader = DataLoader(self.dataset, batch_size=self.batch_size, shuffle=False, sampler=train_sampler)
-        self.val_loader = DataLoader(self.dataset, batch_size=self.batch_size, shuffle=False, sampler=val_sampler)
-        self.test_loader = DataLoader(self.dataset, batch_size=self.batch_size, shuffle=False, sampler=test_sampler)
+        rtrain_dataset = torch.utils.data.Subset(self.vdataset, self.rtrain_sampler)
+        rval_dataset = torch.utils.data.Subset(self.vdataset, self.rval_sampler)
+        rtest_dataset = torch.utils.data.Subset(self.vdataset, self.rtest_sampler)
 
-
+        training_dataset = torch.utils.data.ConcatDataset([vtrain_dataset,rtrain_dataset])
+        validation_dataset = torch.utils.data.ConcatDataset([vval_dataset,rval_dataset])
+        self.train_loader = DataLoader(training_dataset, batch_size=self.batch_size, shuffle=True)
+        self.val_loader = DataLoader(validation_dataset, batch_size=self.batch_size, shuffle=True)
+        self.test_loader = DataLoader(rtest_dataset)
 
     def train_dataloader(self):
         return self.train_loader
