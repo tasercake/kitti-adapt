@@ -18,17 +18,18 @@ import matplotlib.pyplot  as plt
 
 class KITTILoader(Dataset):
 	'''
-	TODO : USe masks in segmentation folder instead of the cancerous bbox
+	Dataset class to load the VKITII dataset
 	'''
-	def __init__(self,images_dir, mask_dir, label_path, info_path, device,transformation = None):
+	def __init__(self,images_dir, label_path, info_path, device,transformation = None):
+
+
+		# Find Root Directory then iterate trhough the 
 
 		'''
-		Initialise
+		Initialise the relevant variables
 		'''
 		self.images = list(sorted(os.listdir(images_dir)))
 		self.images_dir = images_dir
-		self.masks = list(sorted(os.listdir(mask_dir)))
-		self.masks_dir = mask_dir
 
 		self.label_path = label_path
 		self.info_path = info_path
@@ -54,7 +55,6 @@ class KITTILoader(Dataset):
 		if len(image.shape) == 2:
 			image = np.expand_dims(image, 2)
 			image = np.repeat(image, 3, 2)
-
 		return Image.fromarray(image)
 
 
@@ -75,6 +75,18 @@ class KITTILoader(Dataset):
 
 	def _load_info (self, label_path, info_path):
 
+		'''
+		Function takes in label and info.txt path to be processed
+
+		Inputs:
+		- label_path : String (label)
+		- info_path : string
+
+		Outputs:
+		- df : pandas dataframe
+		- info : pandas datframe
+		'''
+
 		bbox = os.path.join(label_path)
 		info = os.path.join(info_path)
 
@@ -83,8 +95,8 @@ class KITTILoader(Dataset):
 		df = df.drop(columns = ['number_pixels', 'truncation_ratio', 'occupancy_ratio', 'isMoving'])
 		infodf = pd.read_csv(info, sep= ' ')
 
-		infodf['labels'] = infodf['model'] + '_' + infodf['color']
-		infodf = infodf.drop(columns = ['label','model', 'color'])
+		# infodf['labels'] = infodf['model'] + '_' + infodf['color']
+		infodf = infodf.drop(columns = ['model', 'color'])
 
 
 		return df, infodf
@@ -95,37 +107,59 @@ class KITTILoader(Dataset):
 		'''
 
 		image_path = os.path.join(self.images_dir,self.images[index])
-		masks_path = os.path.join(self.masks_dir, self.masks[index])
+		# masks_path = os.path.join(self.masks_dir, self.masks[index])
 
 		images = self._load_images(image_path)
-		masks = self._load_images(masks_path) # image masks ( segmentation )
-		masks = np.array(masks)
 
-		masks = torch.as_tensor(masks, dtype=torch.uint8)
+		h, w = images.size
+		# masks = self._load_images(masks_path) # image masks ( segmentation )
+		# masks = np.array(masks)
+
+		# masks = torch.as_tensor(masks, dtype=torch.uint8)
 
 		bboxdf, infodf = self._load_info(self.label_path, self.info_path)
 
 		bboxdf = bboxdf[(bboxdf['frame']==index)]
 
-		left = np.array(bboxdf['left'])
-		right = np.array(bboxdf['right'])
-		top = np.array(bboxdf['top'])
-		bot = np.array(bboxdf['bottom'])
+		'''
+		Scalar bounding boxes
+		'''
+
+		left = (np.array(bboxdf['left']) ) #/ h
+		right = (np.array(bboxdf['right']) ) # / h
+		top = (np.array(bboxdf['top']) )  #/ w
+		bot = (np.array(bboxdf['bottom']) )  # / w
+
+		'''
+		Normalising Bounding Boxes
+		'''
 		boxes = list(np.stack([left, top,right, bot],axis=1))
 
 		box_label = []
 
 		labeldf = pd.merge(bboxdf, infodf, on='trackID')
 
+		label_dict= {'Car': 1, 'Van': 2, 'Truck': 3}
+
+		labeldf['int_label'] = labeldf['label'].map(label_dict)
+
+
 
 		boxes = torch.as_tensor(boxes, dtype=torch.float32).to(self.device)
-		labels = torch.as_tensor(labeldf['trackID'], dtype=torch.int64).to(self.device)
+		labels = torch.as_tensor(labeldf['int_label'], dtype=torch.int64).to(self.device)
 
 		for box, label in list(zip(boxes, labels)):
 
+			area = (box[3]-box[1]) * (box[2]-box[0])
+
+			# if area <= 500: continue
+
+
 			targets = dict()
 			targets['labels'] = label
+
 			targets['boxes'] = box
+			targets['area'] = area
 			box_label.append(targets)
 
 		if self.transformation is not None:
