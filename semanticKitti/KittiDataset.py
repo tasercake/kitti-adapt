@@ -37,7 +37,8 @@ class KittiDataset(Dataset):
         images = []
         filenames = []
         len_root = len(folder)
-        for root, dirs, files in os.walk(folder):
+        print(folder)
+        for root, dirs, files in os.walk(folder[0]):
             for filename in files:
                 img = cv2.imread(os.path.join(root,filename))
                 if ".png" or ".jpg" in filename:
