@@ -41,7 +41,7 @@ class DataLoader_kitti(pl.LightningModule):
         ### Needed as our model used is for image segmentation
         self.feature_extractor = model
         self.feature_extractor.eval()
-        self.fc = nn.Linear(100, num_class)
+        # self.fc = nn.Linear(100, num_class)
 
     def forward(self, x):
         x = self.feature_extractor(x)['out']
@@ -135,8 +135,11 @@ class DataLoader_kitti(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         x, label = batch
         output = self.forward(x)
+        print('output size', output.shape)
         output_predictions = output.argmax(0)
+        print('output pred', output_predictions.shape)
         criterion = torch.nn.CrossEntropyLoss()
+        print('label', label.shape)
         loss = criterion(output_predictions, label)
         return {'loss': loss}
         # return loss (also works)

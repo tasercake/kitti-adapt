@@ -30,7 +30,7 @@ def run():
     desired_classes = ['Car', 'TrafficLight', 'TrafficSign', 'Pole', 'GuardRail', 'Vegetation', 'Terrain', 'Undefined', 'Sky', 'Road']
     for line in f:
         cat,r,g,b = line.split()
-        for cat in desired_classes:
+        if cat in desired_classes:
             virtual_color_dic[cat] = [r,g,b]
             virtual_num_class += 1
 
@@ -41,20 +41,23 @@ def run():
     desired_classes = ['Car', 'TrafficLight', 'TrafficSign', 'Pole', 'GuardRail', 'Vegetation', 'Terrain', 'Undefined', 'Sky', 'Road']
     for line in f:
         cat,r,g,b = line.split()
-        for cat in desired_classes:
+        if cat in desired_classes:
             real_color_dic[cat] = [r,g,b]
             real_num_class += 1
 
     batch_size = 2
     transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                                                                 std=[0.229, 0.224, 0.225])])
+    print('Number of classes',real_num_class)
     model = models.segmentation.fcn_resnet50(pretrained=False, progress=True, num_classes=real_num_class, aux_loss=None)
 
     print('Reading Virtual Data')
-    vir_img_directory = r'C:\Users\teezh\Documents\GitHub\kitti-adapt\data\vKitti_RGB',
-    vir_label_directory = r'C:\Users\teezh\Documents\GitHub\kitti-adapt\data\vKitti_classSeg'
+    # vir_img_directory = r'C:\Users\teezh\Documents\GitHub\kitti-adapt\data\vKitti_RGB',
+    # vir_label_directory = r'C:\Users\teezh\Documents\GitHub\kitti-adapt\data\vKitti_classSeg'
+    vir_img_directory = r"C:\Users\teezh\Documents\GitHub\kitti-adapt\data\data_semantics\training\image_2"
+    vir_label_directory = r"C:\Users\teezh\Documents\GitHub\kitti-adapt\data\data_semantics\training\semantic_rgb"
     virtual_kitti_dataset = KittiDataset(vir_img_directory, vir_label_directory,virtual_color_dic,transform)
-
+    print(len(virtual_kitti_dataset))
     print('Reading Real Data')
     real_img_directory = r"C:\Users\teezh\Documents\GitHub\kitti-adapt\data\data_semantics\training\image_2"
     real_label_directory = r"C:\Users\teezh\Documents\GitHub\kitti-adapt\data\data_semantics\training\semantic_rgb"
