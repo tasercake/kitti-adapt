@@ -22,11 +22,6 @@ def run():
     else:
         dev = "cpu"
     device = torch.device(dev)
-    # img = cv2.imread('../data/VKitti_classSeg/Scene01/15-deg-left/frames/classSegmentation/Camera_0/classgt_00000.png',-1)
-    # print(img.shape)
-    # unique_arr = np.unique(img.reshape(-1, img.shape[2]), axis=0)
-    # if [0,199,255] in unique_arr:
-    #     print('xxx')
 
     ## Processing vColors.txt which contains the rgb values for the segmented image
     f = open('vColors.txt','r')
@@ -56,13 +51,13 @@ def run():
     model = models.segmentation.fcn_resnet50(pretrained=False, progress=True, num_classes=real_num_class, aux_loss=None)
 
     print('Reading Virtual Data')
-    vir_img_directory = "../data/vKitti_RGB/Scene01/15-deg-left/frames/rgb/Camera_1/"
-    vir_label_directory = "../data/VKitti_classSeg/Scene01/15-deg-left/frames/classSegmentation/Camera_1/"
+    vir_img_directory = r'C:\Users\teezh\Documents\GitHub\kitti-adapt\data\vKitti_RGB',
+    vir_label_directory = r'C:\Users\teezh\Documents\GitHub\kitti-adapt\data\vKitti_classSeg'
     virtual_kitti_dataset = KittiDataset(vir_img_directory, vir_label_directory,virtual_color_dic,transform)
 
     print('Reading Real Data')
-    real_img_directory = "../data/data_semantics/training/image_2/"
-    real_label_directory = "../data/data_semantics/training/semantic_rgb/"
+    real_img_directory = r"C:\Users\teezh\Documents\GitHub\kitti-adapt\data\data_semantics\training\image_2"
+    real_label_directory = r"C:\Users\teezh\Documents\GitHub\kitti-adapt\data\data_semantics\training\semantic_rgb"
     real_kitti_dataset = KittiDataset(real_img_directory, real_label_directory,real_color_dic,transform)
 
     print('Creating Dataloader')
