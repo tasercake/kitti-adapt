@@ -136,10 +136,7 @@ class DataLoader_kitti(pl.LightningModule):
         x, label = batch
         output = self.forward(x)
         output_predictions = output.argmax(0)
-        criterion = torch.nn.MSELoss()
-        print('output shape',output.shape)
-        print('output pred shape',output_predictions.shape)
-        print('labelshape',label.shape)
+        criterion = torch.nn.CrossEntropyLoss()
         loss = criterion(output_predictions, label)
         return {'loss': loss}
         # return loss (also works)

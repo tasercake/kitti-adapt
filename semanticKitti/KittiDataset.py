@@ -36,14 +36,16 @@ class KittiDataset(Dataset):
     def load_images_from_folder(self,folder):
         images = []
         filenames = []
-        for filename in os.listdir(folder):
-            img = cv2.imread(os.path.join(folder,filename))
-            if ".png" or ".jpg" in filename:
-                # print(filename)
-                filenames.append(filename)
-            if img is not None:
+        len_root = len(folder)
+        for root, dirs, files in os.walk(folder):
+            for filename in files:
+                img = cv2.imread(os.path.join(root,filename))
                 if ".png" or ".jpg" in filename:
-                    images.append(img)
+                    # print(filename)
+                    filenames.append(os.path.join(root[len_root:],filename))
+                if img is not None:
+                    if ".png" or ".jpg" in filename:
+                        images.append(img)
         attatched_filenames = list(zip(filenames,images))
         return images, attatched_filenames, filenames
 
