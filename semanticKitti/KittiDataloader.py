@@ -137,8 +137,12 @@ class DataLoader_kitti(pl.LightningModule):
         x, label = batch
         output = self.forward(x)
         criterion = torch.nn.NLLLoss()
-        label = label.argmax(1)
+        softmax = torch.nn.Softmax()
+        print(output.shape)
+        print(label.shape)
+        # label = label.argmax(1)
         loss = criterion(output, label)
+        loss = softmax(loss)
         #         print('loss from batch ',loss)
         return {'loss': loss}
         # return loss (also works)
@@ -147,8 +151,12 @@ class DataLoader_kitti(pl.LightningModule):
         x, label = batch
         output = self.forward(x)
         criterion = torch.nn.NLLLoss()
-        label = label.argmax(1)
+        softmax = torch.nn.Softmax()
+        # label = label.argmax(1)
+        print(output.shape)
+        print(label.shape)
         loss = criterion(output, label)
+        loss = softmax(loss)
         return {'val_loss': loss}
 
     def validation_epoch_end(self, outputs):
