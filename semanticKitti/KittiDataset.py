@@ -131,7 +131,8 @@ class KittiDataset(Dataset):
         # Reading RGB Image
         seg_img_name = self.seg_image_filename[idx]
         seg_img = cv2.imread(seg_img_name)
-        seg_all_resized_img = self.standardise_images(seg_img)
+        seg_resized_img = self.standardise_images(seg_img)
+        seg_mask = self.create_all_masks(seg_resized_img)
 
 
         if self.transforms is not None:
@@ -139,4 +140,4 @@ class KittiDataset(Dataset):
 
         # print('img shape',img.shape)
         # print('img seg_all_masks',seg_all_masks.shape)
-        return img, seg_all_resized_img
+        return img, seg_mask

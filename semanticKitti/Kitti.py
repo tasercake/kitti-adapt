@@ -45,7 +45,7 @@ def run():
             real_color_dic[cat] = [r,g,b]
             real_num_class += 1
 
-    batch_size = 2
+    batch_size = 1
     transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                                                                 std=[0.229, 0.224, 0.225])])
     print('Number of classes',real_num_class)
@@ -65,8 +65,9 @@ def run():
 
     print('Creating Dataloader')
     dataloader = DataLoader_kitti(real_kitti_dataset, virtual_kitti_dataset, model, batch_size,0.8,10)
-    trainer = pl.Trainer(gpus=0)
+    trainer = pl.Trainer(gpus=1)
     trainer.fit(dataloader)
+    trainer.test()
 
 if __name__ == '__main__':
     run()

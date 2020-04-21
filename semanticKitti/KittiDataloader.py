@@ -7,8 +7,9 @@ from torch.optim import Adam
 import numpy as np, os, sys
 import torch.nn as nn
 
+
 class DataLoader_kitti(pl.LightningModule):
-    def __init__(self, rdataset, vdataset, model, batch_size, virtual_data_ratio,num_class):
+    def __init__(self, rdataset, vdataset, model, batch_size, virtual_data_ratio, num_class):
         super(DataLoader_kitti, self).__init__()
         self.vdataset = vdataset
         self.rdataset = rdataset
@@ -130,16 +131,26 @@ class DataLoader_kitti(pl.LightningModule):
         return self.test_loader
 
     def configure_optimizers(self):
-        return Adam(self.parameters(), lr=1e-3)
+        return Adam(self.parameters(), lr=1e-4)
 
     def training_step(self, batch, batch_idx):
         x, label = batch
         output = self.forward(x)
-        print('output size', output.shape)
-        output_predictions = output.argmax(0)
-        print('output pred', output_predictions.shape)
-        criterion = torch.nn.CrossEntropyLoss()
-        print('label', label.shape)
-        loss = criterion(output_predictions, label)
+        criterion = torch.nn.NLLLoss()
+        label = label.argmax(1)
+        loss = criterion(output, label)
+        #         print('loss from batch ',loss)
         return {'loss': loss}
         # return loss (also works)
+
+    def validation_step(self, batch, batch_idx):
+        x, label = batch
+        output = self.forward(x)
+        criterion = torch.nn.NLLLoss()
+        label = label.argmax(1)
+        loss = criterion(output, label)
+        return {'val_loss': loss}
+
+    def validation_epoch_end(self, outputs):
+        val_loss_mean = torch.stack([x['val_loss'] for x in outputs]).mean()
+        return {'val_loss': val_loss_mean}
