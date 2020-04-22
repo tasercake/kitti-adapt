@@ -634,6 +634,30 @@ def create_mix_ratio_dataset(ratio,real_dataset, virtual_dataset):
 	return ratio_mixed
 
 
+def create_ratio_virtual_dataset(ratio,real_dataset, virtual_dataset):
+	'''
+	Create a mix of 100% virtual with a mix of ratio of the real dataset
+
+	Inputs:
+	- ratio : float ( ratio of the real dataset used )
+	- real_dataset : Dataset ( Real dataset )
+	- virtual_dataset : Dataset ( Virtual Dataset )
+
+	Output:
+	- ratio_mixed : ConcatDataset ( The combined dataset )
+	'''
+
+	real_half = int(ratio*len(real_dataset))
+	real__ = len(real_dataset) - real_half
+
+	half1, _ = random_split(real_dataset,[real_half, real__])
+
+	ratio_mixed = ConcatDataset([half1, virtual_dataset])
+
+	return ratio_mixed
+
+
+
 
 
 
@@ -682,14 +706,12 @@ def run():
 
 	print(f'Virtual Training and Validation set count : {len(all_dataset)}')
 
-	
 
-
-	trainloader, valloader = create_loader(all_dataset)
+	# trainloader, valloader = create_loader(all_dataset)
 
 	torch.cuda.empty_cache()
 
-	# mode = 1
+	mode = 1
 	# custom_training(trainloader,valloader, test_dataset, test_images_paths, mode,device = device) # 100% Virtual KITTI, tested against real dataset
 
 	'''
@@ -710,82 +732,123 @@ def run():
 	print(f'Real Training and Validation set count : {len(real_dataset)}')
 
 
-	real_trainloader, real_valloader = create_loader(real_dataset)
+	# real_trainloader, real_valloader = create_loader(real_dataset)
 
-	mode = 2 
+	# mode = 2 
 
-	custom_training(real_trainloader,real_valloader, test_dataset, test_images_paths, mode, device=device)
+	# custom_training(real_trainloader,real_valloader, test_dataset, test_images_paths, mode, device=device)
 
-	'''
-	Additive Mix Dataset
-	'''
+	# '''
+	# Additive Mix Dataset
+	# '''
 
-	# Create a mix of real and virtual dataset
+	# # Create a mix of real and virtual dataset
 
-	mode = 3
+	# mode = 3
+
+	# torch.cuda.empty_cache()
+
+
+	# mixed_dataset = create_mix_dataset(real_dataset, all_dataset)
+
+	# print(f'Mixed Training and validation set count total : {len(mixed_dataset)}')
+
+	# mixed_trainloader, mixed_valloader = create_loader(mixed_dataset)
+
+	# custom_training(mixed_trainloader,mixed_valloader, test_dataset, test_images_paths, mode, device=device)
+
+	# '''
+	# 50-50 mix Of Dataset
+	# '''
+
+	# mode = 4
+
+	# torch.cuda.empty_cache()
+
+	# mix_50_50_dataset = create_mix_50_50_dataset(real_dataset, all_dataset)
+
+	# print(f'50-50 Mixed Training and validation set count total : {len(mix_50_50_dataset)}')
+
+	# mixed50_trainloader, mixed50_valloader = create_loader(mix_50_50_dataset)
+
+	# custom_training(mixed50_trainloader,mixed50_valloader, test_dataset, test_images_paths, mode, device=device)
+
+
+	# print(f'Test set count {len(test_dataset)}')
+
+
+	# mode = 5 # 75% real, 25% virtual
+	# torch.cuda.empty_cache()
+
+
+	# ratio = 0.75
+	# mix_ratio_dataset = create_mix_ratio_dataset(ratio,real_dataset, all_dataset)
+
+	# print(f'{ratio} Mixed Training and validation set count total : {len(mix_ratio_dataset)}')
+
+	# mixed_ratio_trainloader, mixed_ratio_valloader = create_loader(mix_ratio_dataset)
+
+
+	# custom_training(mixed_ratio_trainloader, mixed_ratio_valloader, test_dataset, test_images_paths, mode, device=device)
+
+	# mode = 6 # 75% virtual, 25% real
+	# torch.cuda.empty_cache()
+
+
+	# ratio = 0.25
+	# mix_ratio_dataset = create_mix_ratio_dataset(ratio,real_dataset, all_dataset)
+
+	# print(f'{ratio} Mixed Training and validation set count total : {len(mix_ratio_dataset)}')
+
+	# mixed_ratio_trainloader, mixed_ratio_valloader = create_loader(mix_ratio_dataset)
+
+
+	# custom_training(mixed_ratio_trainloader, mixed_ratio_valloader, test_dataset, test_images_paths, mode, device=device)
+
+
 
 	torch.cuda.empty_cache()
 
-
-	mixed_dataset = create_mix_dataset(real_dataset, all_dataset)
-
-	print(f'Mixed Training and validation set count total : {len(mixed_dataset)}')
-
-	mixed_trainloader, mixed_valloader = create_loader(mixed_dataset)
-
-	custom_training(mixed_trainloader,mixed_valloader, test_dataset, test_images_paths, mode, device=device)
-
-	'''
-	50-50 mix Of Dataset
-	'''
-
-	mode = 4
-
-	torch.cuda.empty_cache()
-
-	mix_50_50_dataset = create_mix_50_50_dataset(real_dataset, all_dataset)
-
-	print(f'50-50 Mixed Training and validation set count total : {len(mix_50_50_dataset)}')
-
-	mixed50_trainloader, mixed50_valloader = create_loader(mix_50_50_dataset)
-
-	custom_training(mixed50_trainloader,mixed50_valloader, test_dataset, test_images_paths, mode, device=device)
-
-
-	print(f'Test set count {len(test_dataset)}')
-
-
-	mode = 5 # 75% real, 25% virtual
-	torch.cuda.empty_cache()
-
+	mode = 7  # 100 % Virtual + 75 % Real
 
 	ratio = 0.75
-	mix_ratio_dataset = create_mix_ratio_dataset(ratio,real_dataset, all_dataset)
+	v_75real_dataset = create_ratio_virtual_dataset(ratio,real_dataset, all_dataset)
 
-	print(f'{ratio} Mixed Training and validation set count total : {len(mix_ratio_dataset)}')
 
-	mixed_ratio_trainloader, mixed_ratio_valloader = create_loader(mix_ratio_dataset)
+	print(f'{ratio} real + 100% virtual Mixed Training and validation set count total : {len(v_75real_dataset)}')
 
+	mixed_ratio_trainloader, mixed_ratio_valloader = create_loader(v_75real_dataset)
 
 	custom_training(mixed_ratio_trainloader, mixed_ratio_valloader, test_dataset, test_images_paths, mode, device=device)
 
-	mode = 6 # 75% virtual, 25% real
 	torch.cuda.empty_cache()
+	mode = 8  # 100 % Virtual + 50 % Real
 
+	ratio = 0.5
+
+	v_50real_dataset = create_ratio_virtual_dataset(ratio,real_dataset, all_dataset)
+
+	print(f'{ratio} real + 100% virtual Mixed Training and validation set count total : {len(v_50real_dataset)}')
+
+	mixed_ratio_trainloader, mixed_ratio_valloader = create_loader(v_50real_dataset)
+
+	custom_training(mixed_ratio_trainloader, mixed_ratio_valloader, test_dataset, test_images_paths, mode, device=device)
+
+
+	torch.cuda.empty_cache()
+	mode = 9  # 100 % Virtual + 25 % Real
 
 	ratio = 0.25
-	mix_ratio_dataset = create_mix_ratio_dataset(ratio,real_dataset, all_dataset)
 
-	print(f'{ratio} Mixed Training and validation set count total : {len(mix_ratio_dataset)}')
+	v_25real_dataset = create_ratio_virtual_dataset(ratio,real_dataset, all_dataset)
 
-	mixed_ratio_trainloader, mixed_ratio_valloader = create_loader(mix_ratio_dataset)
+	print(f'{ratio} real + 100% virtual Mixed Training and validation set count total : {len(v_25real_dataset)}')
 
+	mixed_ratio_trainloader, mixed_ratio_valloader = create_loader(v_25real_dataset)
 
 	custom_training(mixed_ratio_trainloader, mixed_ratio_valloader, test_dataset, test_images_paths, mode, device=device)
 
-
 	print('Finished')
-
 
 
 
