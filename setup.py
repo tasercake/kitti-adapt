@@ -2,15 +2,18 @@ import setuptools
 
 requirements = [
     # Torch
-    "torchvision",
+    "torch==1.4",
+    "torchvision==0.4",
     "pytorch-lightning",
     "test-tube",
     "torchsummary",
     # Data handling
     "numpy",
     "Pillow",
+    "opencv-python",
     # Visualization
     "matplotlib",
+    "seaborn",
     "pydot",
     "pydotplus",
     # Misc

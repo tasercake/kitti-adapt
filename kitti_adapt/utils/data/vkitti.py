@@ -12,7 +12,7 @@ from torch.utils.data import Dataset
 
 
 class VkittiImageDataSet(Dataset):
-    def __init__(self, vkitti_dir, subsets=("rgb",), transforms: dict = None, limit=None):
+    def __init__(self, vkitti_dir, subsets=("rgb",), transforms: dict = None, limit=None, split=False):
         """
         """
         if not len(subsets):
@@ -22,6 +22,7 @@ class VkittiImageDataSet(Dataset):
         self.subsets = subsets
         self.transforms = transforms or {}
         self.limit = limit
+        self.split = split
 
         # Load filenames and check dataset integrity
         # TODO: convert these prints to logging statements
@@ -87,7 +88,6 @@ class VkittiImageDataSet(Dataset):
             data = Image.open(path)
         elif subset == "depth":
             data = Image.open(path)
-            # data = cv2.imread(path, cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH).astype(np.float32)
         return data
 
     def __len__(self):
