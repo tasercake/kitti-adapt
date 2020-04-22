@@ -134,14 +134,12 @@ data/
 # Images (jpg, png) 
 
 images/
-*.png
-*.jpg
 
 
 # Labels (.txt)
 
 labels/
-*.txt
+segmentation/
 
 
 # Models
