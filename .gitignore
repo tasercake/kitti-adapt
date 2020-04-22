@@ -129,3 +129,21 @@ dmypy.json
 .pyre/
 
 data/
+
+
+# Images (jpg, png) 
+
+images/
+*.png
+*.jpg
+
+
+# Labels (.txt)
+
+labels/
+*.txt
+
+
+# Models
+
+*.pt
