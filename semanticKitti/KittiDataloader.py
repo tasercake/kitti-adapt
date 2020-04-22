@@ -9,8 +9,9 @@ import torch.nn as nn
 
 
 class DataLoader_kitti(pl.LightningModule):
-    def __init__(self, rdataset, vdataset, model, batch_size, virtual_data_ratio, num_class):
+    def __init__(self, rdataset, vdataset, model, batch_size, virtual_data_ratio, num_class, lr):
         super(DataLoader_kitti, self).__init__()
+        self.lr = lr
         self.vdataset = vdataset
         self.rdataset = rdataset
         self.batch_size = batch_size
@@ -23,9 +24,15 @@ class DataLoader_kitti(pl.LightningModule):
         ### 60% of data used for testing, 20% for validation and 20% for testing (For 100% real data),
         # with synthetic data, amount of data used for testing remains the same while ratio for training and validation set changes.
         # rtrain_sampler, rval_sampler, rtest_sampler = self.split_data_3set(self.rdataset, 0.6,0.8)
-        desired_r_train_size = np.int(self.rdataset_length * 0.6 * (1 - virtual_data_ratio))
-        desired_r_val_size = np.int(self.rdataset_length * 0.2 * (1 - virtual_data_ratio))
-        desired_r_test_size = np.int(self.rdataset_length * 0.2)
+        if virtual_data_ratio > 1:
+            desired_r_train_size = np.int(self.rdataset_length * 0.6)
+            desired_r_val_size = np.int(self.rdataset_length * 0.2)
+            desired_r_test_size = np.int(self.rdataset_length * 0.2)
+        else:
+            desired_r_train_size = np.int(self.rdataset_length * 0.6 * (1 - virtual_data_ratio))
+            desired_r_val_size = np.int(self.rdataset_length * 0.2 * (1 - virtual_data_ratio))
+            desired_r_test_size = np.int(self.rdataset_length * 0.2)
+
         self.rtrain_indices, self.rval_indices, self.rtest_indices = self.split_data_return_indices_3(
             self.rdataset_length, desired_r_train_size, desired_r_val_size, desired_r_test_size)
 
@@ -42,11 +49,12 @@ class DataLoader_kitti(pl.LightningModule):
         ### Needed as our model used is for image segmentation
         self.feature_extractor = model
         self.feature_extractor.eval()
-        # self.fc = nn.Linear(100, num_class)
+        self.conv = nn.Conv2d(21, num_class, kernel_size=(1, 1), stride=(1, 1))
 
     def forward(self, x):
         x = self.feature_extractor(x)['out']
-        # x = self.fc(x)
+        # print(x)
+        x = self.conv(x)
         return x
 
     def split_data_3set(self, dataset, split_ratio1, split_ratio2, seed=1337):
@@ -131,34 +139,60 @@ class DataLoader_kitti(pl.LightningModule):
         return self.test_loader
 
     def configure_optimizers(self):
-        return Adam(self.parameters(), lr=1e-4)
+        return Adam(self.parameters(), lr=self.lr)
 
     def training_step(self, batch, batch_idx):
         x, label = batch
         output = self.forward(x)
-        criterion = torch.nn.NLLLoss()
-        softmax = torch.nn.Softmax()
-        print(output.shape)
-        print(label.shape)
-        # label = label.argmax(1)
+        criterion = torch.nn.BCEWithLogitsLoss(reduction='sum')
         loss = criterion(output, label)
-        loss = softmax(loss)
-        #         print('loss from batch ',loss)
+        #         print('output_pred data: ', output_pred.data)
+        #         print('label data: ', label_max.data)
+        #         if batch_idx % 20 == 0:
+        #             print(str(batch_idx) + 'Loss ' + str(loss))
         return {'loss': loss}
-        # return loss (also works)
 
     def validation_step(self, batch, batch_idx):
         x, label = batch
         output = self.forward(x)
-        criterion = torch.nn.NLLLoss()
-        softmax = torch.nn.Softmax()
-        # label = label.argmax(1)
-        print(output.shape)
-        print(label.shape)
+        criterion = torch.nn.BCEWithLogitsLoss(reduction='sum')
         loss = criterion(output, label)
-        loss = softmax(loss)
-        return {'val_loss': loss}
+        output_pred = output.argmax(1)
+        label_max = label.argmax(1)
+        #         print('output_pred data',output_pred.data)
+        #         print('label_max data',output_pred.data)
+        #         print('length of prediction ', (output_pred.data == label_max.data).cpu().numpy())
+        #         print('sum of prediction ', np.sum((output_pred.data == label_max.data).cpu().numpy()))
+        running_corrects = np.sum((output_pred.data == label_max.data).cpu().numpy())
+        running_total = label_max.shape[0] * label_max.shape[1] * label_max.shape[2]
+        #         if batch_idx % 10 == 0:
+        #             print('correct: ' + str(running_corrects) + ' total ' + str(running_total))
+        return {'val_loss': loss, 'running_correct': running_corrects, 'running_total': running_total}
 
     def validation_epoch_end(self, outputs):
         val_loss_mean = torch.stack([x['val_loss'] for x in outputs]).mean()
-        return {'val_loss': val_loss_mean}
+        val_corr = np.sum([x['running_correct'] for x in outputs])
+        val_total = np.sum([x['running_total'] for x in outputs])
+        #         print(val_corr,val_total)
+        val_acc = float(val_corr) / float(val_total)
+        print('validation accuracy', val_acc)
+        return {'val_loss': val_loss_mean, 'accuracy': val_acc}
+
+    def test_step(self, batch, batch_idx):
+        x, label = batch
+        output = self.forward(x)
+        criterion = torch.nn.BCEWithLogitsLoss(reduction='sum')
+        loss = criterion(output, label)
+        output_pred = output.argmax(1)
+        label_max = label.argmax(1)
+        running_corrects = np.sum((output_pred.data == label_max.data).cpu().numpy())
+        running_total = label_max.shape[0] * label_max.shape[1] * label_max.shape[2]
+        return {'test_loss': loss, 'running_correct': running_corrects, 'running_total': running_total}
+
+    def test_epoch_end(self, outputs):
+        test_loss_mean = torch.stack([x['test_loss'] for x in outputs]).mean()
+        test_corr = np.sum([x['running_correct'] for x in outputs])
+        test_total = np.sum([x['running_total'] for x in outputs])
+        test_acc = float(test_corr) / float(test_total)
+        print('test accuracy', test_acc)
+        return {'test_loss': test_loss_mean, 'accuracy': test_acc}
