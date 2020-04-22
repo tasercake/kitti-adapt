@@ -23,10 +23,7 @@ requirements = [
     "tqdm",
 ]
 
-dev_requirements = [
-    "jupyter",
-    "black"
-]
+dev_requirements = ["jupyter", "black"]
 
 with open("README.md", "r") as fh:
     long_description = fh.read()

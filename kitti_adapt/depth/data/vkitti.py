@@ -12,31 +12,50 @@ from torch.utils.data import Dataset
 
 
 class VkittiImageDataSet(Dataset):
-    def __init__(self, vkitti_dir, subsets=("rgb",), transforms: dict = None, limit=None, split=False):
+    def __init__(
+        self,
+        vkitti_dir,
+        scenes=None,
+        subsets=("rgb",),
+        transform=None,
+        split=False,
+        single_camera=True,
+        exclude=("clone", "30-deg-right", "30-deg-left", "15-deg-right"),
+    ):
         """
         """
         if not len(subsets):
             raise ValueError("Must provide at least one VKITTI subset to load.")
 
         self.vkitti_dir = Path(vkitti_dir)
+        self.scenes = scenes
         self.subsets = subsets
-        self.transforms = transforms or {}
-        self.limit = limit
+        self.transform = transform
         self.split = split
+        self.single_camera = single_camera
+        self.exclude = exclude
 
         # Load filenames and check dataset integrity
         # TODO: convert these prints to logging statements
         path_templates = []
         for subset in self.subsets:
             # Recursively get files in subset
-            templates = [f for f in glob(
-                os.path.join(str(self.vkitti_dir), subset, "**/*"),
-                recursive=True,
-            )]
+            templates = [
+                f
+                for f in glob(
+                    os.path.join(str(self.vkitti_dir), subset, "**/*"), recursive=True,
+                )
+            ]
             # Filter files only
             templates = filter(os.path.isfile, templates)
-            if self.limit:
-                templates = itertools.islice(templates, self.limit)
+            if self.scenes:
+                templates = filter(lambda f: any(scn in f for scn in self.scenes), templates)
+            if self.single_camera:
+                templates = filter(lambda f: "Camera_0" in f, templates)
+            if self.exclude:
+                templates = filter(
+                    lambda f: all(excl not in f for excl in self.exclude), templates
+                )
             # Replace subset name with templating brackets
             templates = map(lambda f: f.replace(subset, "{subset}"), templates)
             # Remove extension
@@ -44,7 +63,7 @@ class VkittiImageDataSet(Dataset):
             # Iterate over generator and create concrete set
             templates = set(templates)
             path_templates.append(templates)
-            print(f"Subset '{subset}' contains {len(templates)} files")
+            # print(f"Subset contains {len(templates)} files")
         if len(self.subsets) > 1:
             self.path_templates = path_templates[0].intersection(*path_templates[1:])
             if len(self.path_templates) != max(map(len, path_templates)):
@@ -57,11 +76,13 @@ class VkittiImageDataSet(Dataset):
                         map(str, path_templates[i].difference(self.path_templates))
                     )
                     if diff:
-                        print(f"'{self.subsets[i]}': {diff}. Total missing: {len(diff)}")
+                        print(
+                            f"'{self.subsets[i]}': {diff}. Total missing: {len(diff)}"
+                        )
         else:
             self.path_templates = path_templates[0]
         self.path_templates = natsorted(self.path_templates)
-        print(f"Found a total of {len(self.path_templates)} valid files.")
+        print(f"Dataset contains {len(self.path_templates)} files.")
 
     def get(self, idx, transform=False):
         template = self.path_templates[idx]
@@ -71,10 +92,14 @@ class VkittiImageDataSet(Dataset):
             path = glob(path + "*")
             if not path:
                 raise ValueError(f"Could not find file matching '{path}'.")
-            data = self._load_file(path[0], subset)
-            if transform and subset in self.transforms:
-                data = self.transforms[subset](data)
-            sample[subset] = data
+            try:
+                data = self._load_file(path[0], subset)
+                sample[subset] = data
+            except:
+                print(f"Failed to load {path}")
+                raise
+        if transform and self.transform:
+            sample = self.transform(sample)
         return sample
 
     def __getitem__(self, idx):
