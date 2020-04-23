@@ -11,7 +11,7 @@ import cv2
 from torch.utils.data import Dataset
 
 
-class VkittiImageDataSet(Dataset):
+class VkittiImageDataset(Dataset):
     def __init__(
         self,
         vkitti_dir,
