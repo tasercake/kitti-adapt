@@ -18,7 +18,6 @@ class VkittiImageDataSet(Dataset):
         scenes=None,
         subsets=("rgb",),
         transform=None,
-        split=False,
         single_camera=True,
         exclude=("clone", "30-deg-right", "30-deg-left", "15-deg-right"),
     ):
@@ -31,7 +30,6 @@ class VkittiImageDataSet(Dataset):
         self.scenes = scenes
         self.subsets = subsets
         self.transform = transform
-        self.split = split
         self.single_camera = single_camera
         self.exclude = exclude
 
@@ -84,7 +82,7 @@ class VkittiImageDataSet(Dataset):
         self.path_templates = natsorted(self.path_templates)
         print(f"Dataset contains {len(self.path_templates)} files.")
 
-    def get(self, idx, transform=False):
+    def get(self, idx, transform=True):
         template = self.path_templates[idx]
         sample = {}
         for subset in self.subsets:

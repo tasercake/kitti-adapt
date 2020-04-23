@@ -6,6 +6,9 @@ import numpy as np
 # SOURCE:
 # https://github.com/xanderchf/MonoDepth-FPN-PyTorch/blob/master/main_fpn.py
 def rmse_log(pred, target):
+    if not pred.shape == target.shape:
+        _, _, H, W = target.shape
+        pred = F.upsample(pred, size=(H, W), mode="bilinear")
     loss = torch.sqrt(torch.mean(torch.abs(torch.log(target) - torch.log(pred)) ** 2))
     return loss
 
@@ -27,6 +30,9 @@ def l1_log(pred, target):
 
 
 def rmse(pred, target):
+    if not pred.shape == target.shape:
+        _, _, H, W = target.shape
+        pred = F.upsample(pred, size=(H, W), mode="bilinear")
     loss = torch.sqrt(torch.mean(torch.abs(10.0 * target - 10.0 * pred) ** 2))
     return loss
 
