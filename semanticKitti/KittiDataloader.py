@@ -25,23 +25,21 @@ class DataLoader_kitti(pl.LightningModule):
         # with synthetic data, amount of data used for testing remains the same while ratio for training and validation set changes.
         # rtrain_sampler, rval_sampler, rtest_sampler = self.split_data_3set(self.rdataset, 0.6,0.8)
         if virtual_data_ratio > 1:
-            desired_r_train_size = np.int(self.rdataset_length * 0.6)
-            desired_r_val_size = np.int(self.rdataset_length * 0.2)
-            desired_r_test_size = np.int(self.rdataset_length * 0.2)
-        else:
-            desired_r_train_size = np.int(self.rdataset_length * 0.6 * (1 - virtual_data_ratio))
-            desired_r_val_size = np.int(self.rdataset_length * 0.2 * (1 - virtual_data_ratio))
-            desired_r_test_size = np.int(self.rdataset_length * 0.2)
+            desired_r_train_size = np.int(self.rdataset_length * 0.5)
 
+        else:
+            desired_r_train_size = np.int(self.rdataset_length * 0.5 * (1 - virtual_data_ratio))
+
+        desired_r_val_size = np.int(self.rdataset_length * 0.25)
+        desired_r_test_size = np.int(self.rdataset_length * 0.25)
+        desired_v_train_size = np.int((self.rdataset_length * 0.5) * virtual_data_ratio)
+        desired_v_val_size = np.int((self.rdataset_length * 0.25) * virtual_data_ratio)
         self.rtrain_indices, self.rval_indices, self.rtest_indices = self.split_data_return_indices_3(
             self.rdataset_length, desired_r_train_size, desired_r_val_size, desired_r_test_size)
 
-        desired_v_train_size = np.int((self.rdataset_length * 0.6) * virtual_data_ratio)
-        desired_v_val_size = np.int((self.rdataset_length * 0.2) * virtual_data_ratio)
         self.vtrain_indices, self.vval_indices = self.split_data_return_indices_2(self.vdataset_length,
                                                                                   desired_v_train_size,
                                                                                   desired_v_val_size)
-
         self.train_loader = 0
         self.val_loader = 0
         self.test_loader = 0
@@ -126,7 +124,7 @@ class DataLoader_kitti(pl.LightningModule):
         training_dataset = torch.utils.data.ConcatDataset([vtrain_dataset, rtrain_dataset])
         validation_dataset = torch.utils.data.ConcatDataset([vval_dataset, rval_dataset])
         self.train_loader = DataLoader(training_dataset, batch_size=self.batch_size, shuffle=True)
-        self.val_loader = DataLoader(validation_dataset, batch_size=self.batch_size, shuffle=True)
+        self.val_loader = DataLoader(rval_dataset, batch_size=self.batch_size, shuffle=True)
         self.test_loader = DataLoader(rtest_dataset)
 
     def train_dataloader(self):
@@ -153,28 +151,42 @@ class DataLoader_kitti(pl.LightningModule):
         return {'loss': loss}
 
     def validation_step(self, batch, batch_idx):
+        ### (batch_size, number of classes, spatial dim)
         x, label = batch
         output = self.forward(x)
         criterion = torch.nn.BCEWithLogitsLoss(reduction='sum')
         loss = criterion(output, label)
         output_pred = output.argmax(1)
         label_max = label.argmax(1)
-        #         print('output_pred data',output_pred.data)
-        #         print('label_max data',output_pred.data)
-        #         print('length of prediction ', (output_pred.data == label_max.data).cpu().numpy())
-        #         print('sum of prediction ', np.sum((output_pred.data == label_max.data).cpu().numpy()))
+        #         print(label.dtype)
+        label = label.cpu().type(torch.LongTensor).numpy()
+        max_ind = torch.argmax(output, 1, keepdim=True).cpu()
+        one_hot = torch.FloatTensor(output.shape)
+        one_hot.zero_()
+        one_hot.scatter_(1, max_ind, 1)
+        one_hot = one_hot.type(torch.LongTensor).numpy()
+        #         print('one hot', one_hot)
+        #         print('label', label)
         running_corrects = np.sum((output_pred.data == label_max.data).cpu().numpy())
         running_total = label_max.shape[0] * label_max.shape[1] * label_max.shape[2]
-        #         if batch_idx % 10 == 0:
-        #             print('correct: ' + str(running_corrects) + ' total ' + str(running_total))
-        return {'val_loss': loss, 'running_correct': running_corrects, 'running_total': running_total}
+        #         iou_intersect = (one_hot & label).float().sum((1, 2,3))
+        #         iou_union = (one_hot | label).float().sum((1,2,3))
+        iou_intersect = np.sum(np.logical_and(one_hot, label))
+        iou_union = np.sum(np.logical_or(one_hot, label))
+        #         print('iou intersect', iou_intersect)
+        #         print('iou iou_union', iou_union)
+        return {'val_loss': loss, 'running_correct': running_corrects, 'running_total': running_total,
+                'iou_intersect': iou_intersect, 'iou_union': iou_union}
 
     def validation_epoch_end(self, outputs):
+        SMOOTH = 1e-6
         val_loss_mean = torch.stack([x['val_loss'] for x in outputs]).mean()
         val_corr = np.sum([x['running_correct'] for x in outputs])
         val_total = np.sum([x['running_total'] for x in outputs])
-        #         print(val_corr,val_total)
         val_acc = float(val_corr) / float(val_total)
+        val_intersect = np.sum([x['iou_intersect'] for x in outputs])
+        val_union = np.sum([x['iou_union'] for x in outputs])
+        print('IOU', (val_intersect + SMOOTH) / (val_union + SMOOTH))
         print('validation accuracy', val_acc)
         return {'val_loss': val_loss_mean, 'accuracy': val_acc}
 
@@ -187,12 +199,27 @@ class DataLoader_kitti(pl.LightningModule):
         label_max = label.argmax(1)
         running_corrects = np.sum((output_pred.data == label_max.data).cpu().numpy())
         running_total = label_max.shape[0] * label_max.shape[1] * label_max.shape[2]
-        return {'test_loss': loss, 'running_correct': running_corrects, 'running_total': running_total}
+
+        label = label.cpu().type(torch.LongTensor)
+        max_ind = torch.argmax(output, 1, keepdim=True).cpu()
+        one_hot = torch.FloatTensor(output.shape)
+        one_hot.zero_()
+        one_hot.scatter_(1, max_ind, 1)
+        one_hot = one_hot.type(torch.LongTensor)
+
+        iou_intersect = (one_hot & label).float().sum((1, 2, 3))
+        iou_union = (one_hot | label).float().sum((1, 2, 3))
+        return {'test_loss': loss, 'running_correct': running_corrects, 'running_total': running_total,
+                'iou_intersect': iou_intersect, 'iou_union': iou_union}
 
     def test_epoch_end(self, outputs):
+        SMOOTH = 1e-6
         test_loss_mean = torch.stack([x['test_loss'] for x in outputs]).mean()
         test_corr = np.sum([x['running_correct'] for x in outputs])
         test_total = np.sum([x['running_total'] for x in outputs])
         test_acc = float(test_corr) / float(test_total)
+        test_intersect = np.sum([x['iou_intersect'] for x in outputs])
+        test_union = np.sum([x['iou_union'] for x in outputs])
+        print('IOU', (test_intersect + SMOOTH) / (test_union + SMOOTH))
         print('test accuracy', test_acc)
         return {'test_loss': test_loss_mean, 'accuracy': test_acc}
