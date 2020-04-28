@@ -36,23 +36,23 @@ class KittiDataset(Dataset):
     def __len__(self):
         return len(self.org_image_filename)
 
-    def load_images_from_folder(self, folder):
-        images = []
-        filenames = []
-        len_root = len(folder)
-        if type(folder) == tuple:
-            folder = folder[0]
-        for root, dirs, files in os.walk(folder):
-            for filename in files:
-                img = cv2.imread(os.path.join(root, filename))
-                if ".png" or ".jpg" in filename:
-                    # print(filename)
-                    filenames.append(os.path.join(root[len_root:], filename))
-                if img is not None:
-                    if ".png" or ".jpg" in filename:
-                        images.append(img)
-        attatched_filenames = list(zip(filenames, images))
-        return images, attatched_filenames, filenames
+    #     def load_images_from_folder(self,folder):
+    #         images = []
+    #         filenames = []
+    #         len_root = len(folder)
+    #         if type(folder) == tuple:
+    #             folder = folder[0]
+    #         for root, dirs, files in os.walk(folder):
+    #             for filename in files:
+    #                 img = cv2.imread(os.path.join(root,filename))
+    #                 if ".png" or ".jpg" in filename:
+    #                     # print(filename)
+    #                     filenames.append(os.path.join(root[len_root:],filename))
+    #                 if img is not None:
+    #                     if ".png" or ".jpg" in filename:
+    #                         images.append(img)
+    #         attatched_filenames = list(zip(filenames,images))
+    #         return images, attatched_filenames, filenames
 
     def load_names_from_folder(self, folder):
         filenames = []
@@ -60,8 +60,8 @@ class KittiDataset(Dataset):
         if type(folder) == tuple:
             folder = folder[0]
         for root, dirs, files in os.walk(folder):
-            print('root dir ', root)
-            if 'data_semantics' in root or 'deg' in root:
+            #             print('root dir ', root)
+            if 'data_semantics' in root or 'clone' in root:
                 for filename in files:
                     if ".png" or ".jpg" in filename:
                         filenames.append(os.path.join(root, filename))
