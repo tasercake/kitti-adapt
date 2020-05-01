@@ -34,7 +34,7 @@ from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 
 import matplotlib.pyplot as plt
 
-from PIL import Image, ImageDraw 
+from PIL import Image, ImageDraw, ImageFont
 
 
 def is_dist_avail_and_initialized():
@@ -268,18 +268,25 @@ def load_image ( name , device ='cuda'):
 
 def test_visualisation(model_path, models, test_images_paths, test_dataset, mode ,device):
 	'''
-	Test
+	Test and save sample images with bounding boxes and the labels
 
 	Inputs:
-	- model_path : 
-	- models : 
-	- test_images_paths : 
-	- test_dataset :
-	- device :
+	- model_path : string( path to the model )
+	- models : weights (model weights)
+	- test_images_paths : string ( model path )
+	- test_dataset : Dataset (testing dataset)
+	- device : device (cuda)
 
 	Outputs:
 
+	saved images
 	'''
+	import random
+
+	label_dict= { 1: 'Car', 2 : 'Van' , 3 : 'Truck', 0 : 'Background'}
+	mode_dict = { 1 : '100% Virtual Dataset', 2: '100 % Real Dataset'}
+	directory = os.path.join('results', 'sample_bbox')
+
 
 	def save_image(image,directory, filename):
 		if not os.path.exists(directory):
@@ -288,8 +295,6 @@ def test_visualisation(model_path, models, test_images_paths, test_dataset, mode
 		img_file = os.path.join(directory, filename)
 
 		image.save(img_file)
-
-		print(f'Saved to {img_file}')
 
 	print(f'Loading model to score images. Scores saved {model_path}') # Testing the model
 
@@ -300,6 +305,7 @@ def test_visualisation(model_path, models, test_images_paths, test_dataset, mode
 	models.load_state_dict(model_file)
 
 	print('Model loaded')
+
 
 	models.to(device)
 	models.eval()
@@ -331,35 +337,34 @@ def test_visualisation(model_path, models, test_images_paths, test_dataset, mode
 					rect = output[0]['boxes']
 
 					if rect.nelement() != 0:
+						i = 0
 						int_rects = rect.int().cpu().numpy()
 						labels = labels.int().cpu().numpy()
 						scores = scores.float().cpu().numpy()
 
 						for int_rect, label, score in zip(int_rects, labels, scores):
-
+							# print(label_dict[label], score)
+							r = random.randint(20,255)
+							g = random.randint(20,255)
+							b = random.randint(20,255)
+							rgb = (r,g,b)
 
 							x0,y0 ,x1,y1 = int_rect
 							img1 = ImageDraw.Draw( pic_image )   
+							font = ImageFont.truetype("bevan.ttf", 20)
 							# img1.text([x0,y0,x1,y1+10], label, fill=(255,255,0))
-							img1.rectangle([x0,y0 ,x1,y1], outline ="red", width = 3) 
+							img1.text((0,0+i),f'{label_dict[label]} {score} ', rgb,font=font)
+							img1.rectangle([x0,y0 ,x1,y1], outline = rgb, width = 3) # Draw the text on the 
+							i += 20
+
+						save_image(pic_image, os.path.join(directory, str(mode)), f'{image[:-4]}_samplebbox.png')
 
 					mean_score = mean_score.float().cpu().numpy()
 
 					mean_test_accuracy.append(mean_score)
 					bar.update()
 
-
-		print('Mean of all the test scores')
-
-		print(np.mean(mean_test_accuracy))
-
-		directory = os.path.join('results', 'sample_bbox')
-
-
-		save_image(pic_image, directory, f'samplebbox_{mode}.png')
-
-		pic_image.show()
-
+		print('FINISHED TESTING')
 
 
 
@@ -671,7 +676,7 @@ def run():
 	'''
 
 	scene_lists = ['Scene01','Scene02'] # Change the umbrella folder name. 6586 rtaining data
-	test_scene = 'Test02' # 150 images for the test set
+	test_scene = 'Test01' # 150 images for the test set
 
 
 	# here change the sub folder name
@@ -707,12 +712,16 @@ def run():
 	print(f'Virtual Training and Validation set count : {len(all_dataset)}')
 
 
-	# trainloader, valloader = create_loader(all_dataset)
+	trainloader, valloader = create_loader(all_dataset)
 
 	torch.cuda.empty_cache()
 
+	'''
+	100% Virtual Dataset
+	'''
+
 	mode = 1
-	# custom_training(trainloader,valloader, test_dataset, test_images_paths, mode,device = device) # 100% Virtual KITTI, tested against real dataset
+	custom_training(trainloader,valloader, test_dataset, test_images_paths, mode,device = device) # 100% Virtual KITTI, tested against real dataset
 
 	'''
 	100 % Real Dataset
@@ -804,8 +813,6 @@ def run():
 
 
 	custom_training(mixed_ratio_trainloader, mixed_ratio_valloader, test_dataset, test_images_paths, mode, device=device)
-
-
 
 	torch.cuda.empty_cache()
 
