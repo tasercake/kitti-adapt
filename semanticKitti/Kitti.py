@@ -28,8 +28,8 @@ def run():
     f = open('vColors.txt', 'r')
     virtual_color_dic = {}
     virtual_num_class = 0
-    desired_classes = ['Car', 'TrafficLight', 'TrafficSign', 'Pole', 'GuardRail', 'Vegetation', 'Terrain', 'Undefined',
-                       'Sky', 'Road']
+    #     desired_classes = ['Car', 'TrafficLight', 'TrafficSign', 'Pole', 'GuardRail', 'Vegetation', 'Terrain', 'Undefined', 'Sky', 'Road']
+    desired_classes = ['Car', 'Undefined']
     for line in f:
         cat, r, g, b = line.split()
         if cat in desired_classes:
@@ -40,15 +40,15 @@ def run():
     f = open('rColors.txt', 'r')
     real_color_dic = {}
     real_num_class = 0
-    desired_classes = ['Car', 'TrafficLight', 'TrafficSign', 'Pole', 'GuardRail', 'Vegetation', 'Terrain', 'Undefined',
-                       'Sky', 'Road']
+    # desired_classes = ['Car', 'TrafficLight', 'TrafficSign', 'Pole', 'GuardRail', 'Vegetation', 'Terrain', 'Undefined', 'Sky', 'Road']
+    desired_classes = ['Car', 'Undefined']
     for line in f:
         cat, r, g, b = line.split()
         if cat in desired_classes:
             real_color_dic[cat] = [r, g, b]
             real_num_class += 1
 
-    batch_size = 2
+    batch_size = 1
     transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                                                                 std=[0.229, 0.224, 0.225])])
     print('Number of classes', real_num_class)
@@ -60,7 +60,9 @@ def run():
         #         print(child)
         # for param in child.parameters():
         #     print(param.requires_grad)
+        print(i)
         if i < 3:
+            print(i)
             for param in child.parameters():
                 param.requires_grad = False
 
@@ -76,39 +78,41 @@ def run():
 
     print('Creating Dataloader')
     # All real
-    dataloader1 = DataLoader_kitti(real_kitti_dataset, virtual_kitti_dataset, model, batch_size, 0, 10, 0.001)
-    dataloader2 = DataLoader_kitti(real_kitti_dataset, virtual_kitti_dataset, model, batch_size, 1, 10, 0.001)
-    dataloader3 = DataLoader_kitti(real_kitti_dataset, virtual_kitti_dataset, model, batch_size, 0.5, 10, 0.001)
-    dataloader4 = DataLoader_kitti(real_kitti_dataset, virtual_kitti_dataset, model, batch_size, 2, 10, 0.001)
-    dataloader5 = DataLoader_kitti(real_kitti_dataset, virtual_kitti_dataset, model, batch_size, 5, 10, 0.001)
-    dataloader6 = DataLoader_kitti(real_kitti_dataset, virtual_kitti_dataset, model, batch_size, 10, 10, 0.001)
-    trainer = pl.Trainer(min_epochs=5, max_epochs=5, gpus=1)
+    dataloader1 = DataLoader_kitti(real_kitti_dataset, virtual_kitti_dataset, model, batch_size, 0, real_num_class,
+                                   0.005)
+    # dataloader2 = DataLoader_kitti(real_kitti_dataset, virtual_kitti_dataset, model, batch_size, 0.25, real_num_class,
+    #                                0.005)
+    # dataloader3 = DataLoader_kitti(real_kitti_dataset, virtual_kitti_dataset, model, batch_size, 2, real_num_class,
+    #                                0.0005)
+    # dataloader4 = DataLoader_kitti(real_kitti_dataset, virtual_kitti_dataset, model, batch_size, 5, real_num_class,
+    #                                0.0005)
+    #     dataloader5 = DataLoader_kitti(real_kitti_dataset, virtual_kitti_dataset, model, batch_size,1,real_num_class,0.0005)
+
+    print('---------------------------------------------------------break 1 - 100% Real----------------------------')
+    trainer = pl.Trainer(min_epochs=0, max_epochs=0, gpus=1, early_stop_callback=True)
     trainer.fit(dataloader1)
     trainer.test()
-    print('---------------------------------------------------------break 1 - 100% Real----------------------------')
-    trainer = pl.Trainer(min_epochs=5, max_epochs=5, gpus=1)
-    trainer.fit(dataloader2)
-    trainer.test()
-    print('---------------------------------------------------------break 1 - 100% Virtual----------------------------')
-    trainer = pl.Trainer(min_epochs=5, max_epochs=5, gpus=1)
-    trainer.fit(dataloader3)
-    trainer.test()
-    print(
-        '---------------------------------------------------------break 1 - 50% Real  50% Virtual----------------------------')
-
-    trainer = pl.Trainer(min_epochs=5, max_epochs=5, gpus=1)
-    trainer.fit(dataloader4)
-    trainer.test()
-    print('---------------------------------------------------------break 1 - 100% Real----------------------------')
-    trainer = pl.Trainer(min_epochs=5, max_epochs=5, gpus=1)
-    trainer.fit(dataloader5)
-    trainer.test()
-    print('---------------------------------------------------------break 1 - 100% Virtual----------------------------')
-    trainer = pl.Trainer(min_epochs=5, max_epochs=5, gpus=1)
-    trainer.fit(dataloader6)
-    trainer.test()
-    print(
-        '---------------------------------------------------------break 1 - 50% Real  50% Virtual----------------------------')
+    # print('---------------------------------------------------------break 2 - 75% Real----------------------------')
+    # trainer = pl.Trainer(min_epochs=5, max_epochs=10, gpus=1, early_stop_callback=True)
+    # trainer.fit(dataloader2)
+    # trainer.test()
+    # print('---------------------------------------------------------break 3 - 50% Real----------------------------')
+    # trainer = pl.Trainer(min_epochs=5, max_epochs=10, gpus=1, early_stop_callback=True)
+    # trainer.fit(dataloader3)
+    # trainer.test()
+    # print('---------------------------------------------------------break 4 - 25% Real----------------------------')
+    # trainer = pl.Trainer(min_epochs=5, max_epochs=10, gpus=1, early_stop_callback=True)
+    # trainer.fit(dataloader4)
+    # trainer.test()
+    # #     print('---------------------------------------------------------break 5 - 0% Real----------------------------')
+    # #     trainer = pl.Trainer(min_epochs=5,max_epochs=10,gpus=1,early_stop_callback=True)
+    # #     trainer.fit(dataloader5)
+    # #     trainer.test()
+    #
+    # #     trainer = pl.Trainer(min_epochs=5,max_epochs=5,gpus=1)
+    # #     trainer.fit(dataloader6)
+    # #     trainer.test()
+    # #     print('---------------------------------------------------------break 1 - 50% Real  50% Virtual----------------------------')
 
     print('I am done')
 
