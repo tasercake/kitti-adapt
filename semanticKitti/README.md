@@ -1,4 +1,4 @@
-# cv-project - image segmentation
+# cv-project - image segmentation  
 Steps required to set up data for running the code
 
 ## Datasets
