@@ -130,3 +130,7 @@ dmypy.json
 
 lightning_logs/
 /data
+
+*.pt
+
+notebooks/experiments/

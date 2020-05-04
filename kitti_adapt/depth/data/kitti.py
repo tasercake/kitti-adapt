@@ -54,14 +54,17 @@ class KittiDepthDataset(Dataset):
             f for f in self.depth_files if
             (f.name not in filename_diff) or (f.parents[3].name not in dirname_diff)
         ]
+        self.rgb_files = natsorted(self.rgb_files)
+        self.depth_files = natsorted(self.depth_files)
         assert len(self.depth_files) == len(self.rgb_files)
 
     def get(self, idx, transform=True):
         rgb_file = self.rgb_files[idx]
         depth_file = self.depth_files[idx]
+        assert str(rgb_file)[-14:] == str(depth_file)[-14:], f"Image name mismatch! {rgb_file} | {depth_file}"
         rgb = Image.open(rgb_file)
         depth = Image.open(depth_file)
-        depth = depth.filter(ImageFilter.MaxFilter(9))
+        depth = depth.filter(ImageFilter.MaxFilter(5))
         depth = np.array(depth)
         depth[depth == 0] = 65535
         depth = Image.fromarray(depth)
