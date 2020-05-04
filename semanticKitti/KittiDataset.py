@@ -29,24 +29,6 @@ class KittiDataset(Dataset):
     def __len__(self):
         return len(self.org_image_filename)
 
-    #     def load_images_from_folder(self,folder):
-    #         images = []
-    #         filenames = []
-    #         len_root = len(folder)
-    #         if type(folder) == tuple:
-    #             folder = folder[0]
-    #         for root, dirs, files in os.walk(folder):
-    #             for filename in files:
-    #                 img = cv2.imread(os.path.join(root,filename))
-    #                 if ".png" or ".jpg" in filename:
-    #                     # print(filename)
-    #                     filenames.append(os.path.join(root[len_root:],filename))
-    #                 if img is not None:
-    #                     if ".png" or ".jpg" in filename:
-    #                         images.append(img)
-    #         attatched_filenames = list(zip(filenames,images))
-    #         return images, attatched_filenames, filenames
-
     def load_names_from_folder(self, folder):
         filenames = []
         len_root = len(folder)
@@ -58,9 +40,6 @@ class KittiDataset(Dataset):
                 for filename in files:
                     if ".png" or ".jpg" in filename:
                         filenames.append(os.path.join(root, filename))
-
-        # attatched_filenames = list(zip(filenames,images))
-        # return images, attatched_filenames, filenames
         return filenames
 
     def check_dims(self, img_directory):
@@ -82,10 +61,6 @@ class KittiDataset(Dataset):
                     sizels.append(k)
             sizeD[size] = sizels
 
-        # print(uSizes)
-        # for thing in sizeD:
-        #     print(thing)
-        #     print(sizeD[thing])
         return sizeD, attatched_filenames
 
     def standardise_images(self, img):
@@ -116,13 +91,9 @@ class KittiDataset(Dataset):
             idx = idx.tolist()
         # Reading RGB Image
         org_img_name = self.org_image_filename[idx]
-        # print(self.img_dir)
-        # print(org_img_name)
-        # print(os.path.join(self.img_dir,org_img_name))
         org_img = cv2.imread(org_img_name)
-        # print('this is the file', org_img)
         org_resized_img = self.standardise_images(org_img)
-        # Reading RGB Image
+        # Reading class segmentated Image
         seg_img_name = self.seg_image_filename[idx]
         seg_img = cv2.imread(seg_img_name)
         seg_resized_img = self.standardise_images(seg_img)
@@ -131,6 +102,4 @@ class KittiDataset(Dataset):
         if self.transforms is not None:
             img = self.transforms(org_resized_img)
 
-        # print('img shape',img.shape)
-        # print('img seg_all_masks',seg_all_masks.shape)
         return img, seg_mask

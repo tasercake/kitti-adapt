@@ -36,4 +36,14 @@ data
 |  ├──<Extract vkitti_2.0.3_rgb.tar here with command>
 
 ## Renaming class segmented files in virtual datasets
+Run the rename_files.py in semanticKitti
+.\semanticKitti\rename_files.py
 The path on line 4 should be updated to match the folder containing the class segmented image
+The running will be completed after a few minutes
+
+## Running the code
+The file for running the Image segmentation code would be Kitti.py in semanticKitti/Kitti.py
+Initialization of parameters are on line 18 - 22
+For quick testing of the functionality of the code, the default epoch is set to 0.
+The running of the code should take at most a few minutes without training.
+
