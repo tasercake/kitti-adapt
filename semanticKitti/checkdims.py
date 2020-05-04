@@ -65,15 +65,5 @@ sizes = []
 for img in corrected_images:
     sizes.append(img.shape)
 uSizes=set(sizes)
-# sizeD = {}
-# for size in uSizes:
-#     sizels = []
-#     for k,v in attatched_filenames:
-#         if v.shape == size:
-#             sizels.append(k)
-#     sizeD[size] = sizels
-# for thing in sizeD:
-#     print(thing)
-#     print(sizeD[thing])
-# print(sizeD.keys())
+
 print(uSizes)
