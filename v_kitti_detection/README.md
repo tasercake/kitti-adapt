@@ -1,86 +1,165 @@
-# Object Detection Virtual KITTI Training
+# README
 
-
-## File Structure
+##  File Structure
 ```
 ├───{extracted folder name}
 │    ├───images
+│    │    ├───Real01
+│    │    │    ├───training
+│    │    │    │    └───images_2
+│    │    │    └───testing
+│    │    │         └───images_2
 │    │    ├───Scene01
 │    │    │    ├───15-deg-left
-│    │    │    │    ├───frames
-│    │    │    │    │    ├───rgb
-│    │    │    │    │    │    ├───Camera_0
-│    │    │    │    │    │    ├───Camera_1
-│    │    │    │    │    │    ├───Unused
+│    │    │    │    └───frames
+│    │    │    │         └───rgb
+│    │    │    │              ├───Camera_0
+│    │    │    │              ├───Camera_1
+│    │    │    │              └───Unused
 │    │    │    ├───15-deg-right
-│    │    │    │    ├───frames
-│    │    │    │    │    ├───rgb
-│    │    │    │    │    │    ├───Camera_0
-│    │    │    │    │    │    ├───Camera_1
-│    │    │    │    │    │    ├───Unused
+│    │    │    │    └───frames
+│    │    │    │         └───rgb
+│    │    │    │              ├───Camera_0
+│    │    │    │              ├───Camera_1
+│    │    │    │              └───Unused
 │    │    │    ├───30-deg-left
-│    │    │    │    ├───frames
-│    │    │    │    │    ├───rgb
-│    │    │    │    │    │    ├───Camera_0
-│    │    │    │    │    │    ├───Camera_1
-│    │    │    │    │    │    ├───Unused
+│    │    │    │    └───frames
+│    │    │    │         └───rgb
+│    │    │    │              ├───Camera_0
+│    │    │    │              ├───Camera_1
+│    │    │    │              └───Unused
 │    │    │    ├───30-deg-right
-│    │    │    │    ├───frames
-│    │    │    │    │    ├───rgb
-│    │    │    │    │    │    ├───Camera_0
-│    │    │    │    │    │    ├───Camera_1
-│    │    │    │    │    │    ├───Unused
+│    │    │    │    └───frames
+│    │    │    │         └───rgb
+│    │    │    │              ├───Camera_0
+│    │    │    │              ├───Camera_1
+│    │    │    │              └───Unused
 │    │    │    ├───clone (same as prev)
 │    │    │    ├───fog   
 │    │    │    ├───morning
 │    │    │    ├───overcast
 │    │    │    ├───rain
-│    │    │    ├───sunset
+│    │    │    └───sunset
+│    │    ├───Test01
+│    │    │    └───test-frames
+│    │    │         └───frames
+│    │    │              └───rgb
+│    │    │                   └───Camera_0
 │    │    ├───Scene02
 │    │    ├───Scene06
 │    │    ├───Scene18
 │    │    └───Scene20
 │    ├───labels
+│    │    ├───Real01
+│    │    │    └───training
+│    │    │         └───label_2
 │    │    ├───Scene01
 │    │    │    ├───15-deg-left
 │    │    │    │    ├───bbox.txt
-│    │    │    │    ├───info.txt
-│    │    │    ├───15-deg-right
-│    │    │    │    ├───bbox.txt
-│    │    │    │    ├───info.txt
+│    │    │    │    └───info.txt
+│    │    │    └───15-deg-right
+│    │    │         ├───bbox.txt
+│    │    │         └───info.txt
 │    │    ├───Scene02
 │    │    ├───Scene06
 │    │    ├───Scene18
 │    │    └───Scene20
 │    ├───loader
+│    │    ├───realloader.py
 │    │    └───dataloader.py
-│    ├───main.py
+│    ├───results
+│    │    └───sample_bbox
+│    │         ├───1
+│    │         │   └───(images from Test01)
+│    │         ├───2
+│    │         │   └───(images from Test01)
+│    │         ├───3
+│    │         │   └───(images from Test01)
+│    │         ├───4
+│    │         │   └───(images from Test01)
+│    │         ├───5
+│    │         │   └───(images from Test01)
+│    │         ├───6
+│    │         │   └───(images from Test01)
+│    │         ├───7
+│    │         │   └───(images from Test01)
+│    │         ├───8
+│    │         │   └───(images from Test01)
+│    │         └───9
+│    │             └───(images from Test01)
+│    ├───object_detect_model1.pt
+│    ├───object_detect_model2.pt
+│    ├───object_detect_model3.pt
+│    ├───object_detect_model4.pt
+│    ├───object_detect_model5.pt
+│    ├───object_detect_model6.pt
+│    ├───object_detect_model7.pt
+│    ├───object_detect_model8.pt
+│    ├───object_detect_model9.pt
+│    └───main.py
 ```
-## Sample bbox.txt
+## INSTRUCTIONS TO RUN
+- object_detect_model*.pt are all the weights that we obtained from our training.
 
-frame cameraID trackID left right top bottom number_pixels truncation_ratio occupancy_ratio isMoving
-0 0 0 988 1241 159 374 41767 0.4230517 0.7678463 False
-0 0 1 927 1102 171 275 7168 0 0.3938462 False
-0 0 2 897 984 171 236 2603 0 0.4603006 False
-0 0 3 591 666 187 239 2311 0 0.5925641 False
-0 0 4 699 732 181 206 452 0 0.5478788 False
-0 0 5 847 881 169 195 420 0 0.4751131 False
+### Windows
+- Install the the `requirements.txt`
+
+    `pip install requirements.txt`
+    
+- To evaluate the data with our weights, do not delete the weights and run:
+
+    `python main.py`
+    
+- To train from scratch to obtain new weights, delete the weights in the folder and run:
+
+    `python main.py`
+    
+    The results are saved in the `results` folder.
+
+- To add your own image, please copy your image over to Test01/test-frames/frames/rgb/Camera_0. Once your image is copied over, run 
+
+    `python main.py`
+
+    and view you results under the `results` folder. 
 
 
-## Sample info.txt
-trackID label model color
-0 Car Sedan4Door Black
-1 Car Hatchback Black
-2 Car Hybrid Black
-3 Car Hatchback Red
-4 Car Hatchback Silver
-5 Car Hatchback Blue
-6 Car Sedan4Door Red
-7 Car SUV Black
-9 Car Hatchback Black
+### Linux
+- Install the the `requirements.txt`
 
-## Loader inputs
+    `pip3 install requirements.txt`
+- To start training from scratch, delete the weights in the folder and run:
 
-- images (processed by the loader)
-- info.txt (labels of the bbox[cars, van, truck])
-- bbox.txt (bbox coordinates and other features)
+    `python3 main.py`
+
+- To start testing with our pretrained weights, keep the weights **(.pt files)** in the folder and run:
+
+    `python3 main.py`
+    you can view you results under `results` folder.
+
+- To add your own image, please copy your image over to Test01/test-frames/frames/rgb/Camera_0. Once your image is copied over, run 
+
+    `python3 main.py`
+
+    and view you results under the `results` folder. 
+
+
+## Project Specifications
+
+This project is done using the following devices:
+
+GPU : NVIDIA RTX 2060
+CPU : Intel Core i5 - 9400F @ 2.9 GHz
+OS : WINDOWS 10 HOME EDITION
+Python version : 3.7
+
+## Model Weights
+
+Model weights can be downloaded from
+
+https://www.dropbox.com/s/1zqmk3r134g9aim/models_weights.zip?dl=0
+
+Please unzip and put the weights in the folder as seen in the folder structure
+
+
+
+
