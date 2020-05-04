@@ -128,18 +128,10 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-data/
-
-
-# Images (jpg, png) 
+lightning_logs/
+/data
 
 images/
-
-
-# Labels (.txt)
 segmentation/
-
-
-# Models
-
 *.pt
+notebooks/experiments/
