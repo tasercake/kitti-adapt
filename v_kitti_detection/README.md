@@ -152,6 +152,14 @@ CPU : Intel Core i5 - 9400F @ 2.9 GHz
 OS : WINDOWS 10 HOME EDITION
 Python version : 3.7
 
+## Model Weights
+
+Model weights can be downloaded from
+
+https://www.dropbox.com/s/1zqmk3r134g9aim/models_weights.zip?dl=0
+
+Please unzip and put the weights in the folder as seen in the folder structure
+
 
 
 
