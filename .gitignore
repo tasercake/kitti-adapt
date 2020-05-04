@@ -129,7 +129,17 @@ dmypy.json
 .pyre/
 
 data/
-semanticKitti/lightning_logs
-semanticKitti/.idea/inspectionProfiles/Project_Default.xml
-semanticKitti/.idea/workspace.xml
-*.0
+
+
+# Images (jpg, png) 
+
+images/
+
+
+# Labels (.txt)
+segmentation/
+
+
+# Models
+
+*.pt
