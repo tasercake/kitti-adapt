@@ -15,10 +15,7 @@ requirements = [
     # Visualization
     "matplotlib",
     "seaborn",
-    "pydot",
-    "pydotplus",
     # Misc
-    "IPython",
     "joblib",
     "natsort",
     "tqdm",
