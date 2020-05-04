@@ -374,10 +374,13 @@ def custom_training(train_loader, val_loader, test_dataset,test_images_paths, mo
 	Custom Training function
 
 	Inputs:
-	- train_loader : 
-	- val_loader :
-	- test_dataset : 
-	- test_images_path : 
+	- train_loader : dataloader (train loader)
+	- val_loader : dataloader  (validation loader)
+	- test_dataset :  Dataset (test dataset)
+	- test_images_path : string ()
+	- mode : int (training/testing mode, see modes in the comments)
+	- device : string (defaulted to cuda)
+	- epochs : int (defaulted to 4)
 	'''
 	model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=True).to(device)
 
