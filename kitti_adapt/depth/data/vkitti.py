@@ -80,7 +80,6 @@ class VkittiImageDataset(Dataset):
         else:
             self.path_templates = path_templates[0]
         self.path_templates = natsorted(self.path_templates)
-        print(f"Dataset contains {len(self.path_templates)} files.")
 
     def get(self, idx, transform=True):
         template = self.path_templates[idx]

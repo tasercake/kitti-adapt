@@ -2,11 +2,12 @@ import setuptools
 
 requirements = [
     # Torch
-    "torch==1.4",
-    "torchvision==0.4",
+#     "torch==1.4",
+#     "torchvision==0.4",
     "pytorch-lightning",
     "test-tube",
     "torchsummary",
+    "tensorflow",
     # Data handling
     "numpy",
     "Pillow",
