@@ -30,6 +30,10 @@ import torchvision.models as models
 
 import torchvision
 
+import torchvision
+from torchvision.models.detection import FasterRCNN
+from torchvision.models.detection.rpn import AnchorGenerator
+
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 
 import matplotlib.pyplot as plt
@@ -147,6 +151,11 @@ def train( model, device , train_loader , optimizer, epochs, loss_func ):
 
 			loss_dict = model(data, targets) #outputs losses instead of predicition
 
+			'''
+			Epoch: [0]  [30/60]  eta: 0:00:11  lr: 0.002629  loss: 0.4705 (0.8935)  loss_classifier: 0.0991 (0.2517)  loss_box_reg: 0.1578 (0.1957)  loss_mask: 0.1970 (0.4204)  loss_objectness: 0.0061 (0.0140)  loss_rpn_box_reg: 0.0075 (0.0118)  time: 0.3403  data: 0.0044  max mem: 5081
+Epoch: [0]  [40/60]  eta: 0:00:07  lr: 0.003476  loss: 0.3901 (0.7568)  loss_classifier: 0.0648 
+			'''
+
 			losses = sum(loss for loss in loss_dict.values())
 
 			# reduce losses over all GPUs for logging purposes
@@ -154,8 +163,6 @@ def train( model, device , train_loader , optimizer, epochs, loss_func ):
 			losses_reduced = sum(loss for loss in loss_dict_reduced.values())
 
 			loss_value = losses_reduced.item()
-
-			# print(loss_value)
 
 			optimizer.zero_grad()
 			losses.backward()
@@ -225,18 +232,12 @@ def validate ( model , device , val_loader , loss_func, epochs):
 
 				mean_score = output.mean()
 
-				# print(mean_score)
-
-
 				if torch.isnan(mean_score).any():
 					mean_score = 0
-				# assert not torch.isnan(mean_score).any()
-
 				val_accuracy += mean_score
 
 				bar.update()
 
-	# print(len(val_loader))
 
 	mean_val_accuracy  = val_accuracy / len(val_loader)
 
@@ -284,7 +285,7 @@ def test_visualisation(model_path, models, test_images_paths, test_dataset, mode
 	import random
 
 	label_dict= { 1: 'Car', 2 : 'Van' , 3 : 'Truck', 0 : 'Background'}
-	mode_dict = { 1 : '100% Virtual Dataset', 2: '100 % Real Dataset'}
+
 	directory = os.path.join('results', 'sample_bbox')
 
 
@@ -344,18 +345,21 @@ def test_visualisation(model_path, models, test_images_paths, test_dataset, mode
 
 						for int_rect, label, score in zip(int_rects, labels, scores):
 							# print(label_dict[label], score)
-							r = random.randint(20,255)
-							g = random.randint(20,255)
-							b = random.randint(20,255)
-							rgb = (r,g,b)
+							if score >= 0.5:
+								r = random.randint(20,255)
+								g = random.randint(20,255)
+								b = random.randint(20,255)
+								rgb = (r,g,b)
 
-							x0,y0 ,x1,y1 = int_rect
-							img1 = ImageDraw.Draw( pic_image )   
-							font = ImageFont.truetype("bevan.ttf", 20)
-							# img1.text([x0,y0,x1,y1+10], label, fill=(255,255,0))
-							img1.text((0,0+i),f'{label_dict[label]} {score} ', rgb,font=font)
-							img1.rectangle([x0,y0 ,x1,y1], outline = rgb, width = 3) # Draw the text on the 
-							i += 20
+								x0,y0 ,x1,y1 = int_rect
+								img1 = ImageDraw.Draw( pic_image )   
+								font = ImageFont.truetype("bevan.ttf", 20)
+								# img1.text([x0,y0,x1,y1+10], label, fill=(255,255,0))
+								img1.text((0,0+i),f'{label_dict[label]} {score} ', rgb,font=font)
+								img1.rectangle([x0,y0 ,x1,y1], outline = rgb, width = 3) # Draw the text on the 
+								i += 20
+							else:
+								continue
 
 						save_image(pic_image, os.path.join(directory, str(mode)), f'{image[:-4]}_samplebbox.png')
 
@@ -376,8 +380,41 @@ def custom_training(train_loader, val_loader, test_dataset,test_images_paths, mo
 	- train_loader : 
 	- val_loader :
 	- test_dataset : 
-	- 
+	- test_images_path : 
 	'''
+
+	# load a pre-trained model for classification and return
+	# only the features
+	# backbone = torchvision.models.mobilenet_v2(pretrained=True).features
+	# # FasterRCNN needs to know the number of
+	# # output channels in a backbone. For mobilenet_v2, it's 1280
+	# # so we need to add it here
+	# backbone.out_channels = 1280
+
+	# # let's make the RPN generate 5 x 3 anchors per spatial
+	# # location, with 5 different sizes and 3 different aspect
+	# # ratios. We have a Tuple[Tuple[int]] because each feature
+	# # map could potentially have different sizes and
+	# # aspect ratios
+	# anchor_generator = AnchorGenerator(sizes=((32, 64, 128, 256, 512),),
+	#                                    aspect_ratios=((0.5, 1.0, 2.0),))
+
+	# # let's define what are the feature maps that we will
+	# # use to perform the region of interest cropping, as well as
+	# # the size of the crop after rescaling.
+	# # if your backbone returns a Tensor, featmap_names is expected to
+	# # be [0]. More generally, the backbone should return an
+	# # OrderedDict[Tensor], and in featmap_names you can choose which
+	# # feature maps to use.
+	# roi_pooler = torchvision.ops.MultiScaleRoIAlign(featmap_names=[0],
+	#                                                 output_size=7,
+	#                                                 sampling_ratio=2)
+
+	# # put the pieces together inside a FasterRCNN model
+	# model = FasterRCNN(backbone,
+	#                    num_classes=4,
+	#                    rpn_anchor_generator=anchor_generator,
+	#                    box_roi_pool=roi_pooler)
 	model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=True).to(device)
 
 	num_classes = 4

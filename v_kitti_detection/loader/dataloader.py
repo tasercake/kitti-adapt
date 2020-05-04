@@ -112,10 +112,7 @@ class KITTILoader(Dataset):
 		images = self._load_images(image_path)
 
 		h, w = images.size
-		# masks = self._load_images(masks_path) # image masks ( segmentation )
-		# masks = np.array(masks)
 
-		# masks = torch.as_tensor(masks, dtype=torch.uint8)
 
 		bboxdf, infodf = self._load_info(self.label_path, self.info_path)
 
@@ -130,9 +127,6 @@ class KITTILoader(Dataset):
 		top = (np.array(bboxdf['top']) )  #/ w
 		bot = (np.array(bboxdf['bottom']) )  # / w
 
-		'''
-		Normalising Bounding Boxes
-		'''
 		boxes = list(np.stack([left, top,right, bot],axis=1))
 
 		box_label = []
