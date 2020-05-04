@@ -47,3 +47,5 @@ Initialization of parameters are on line 18 - 22
 For quick testing of the functionality of the code, the default epoch is set to 0.
 The running of the code should take at most a few minutes without training.
 
+With changes made to the parameters, training can be expected to range from 10-30 minutes depending on the GPU and hyper parameters.
+
