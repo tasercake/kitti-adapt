@@ -29,11 +29,11 @@ The folder structure for data will be as described
 
 data  
 ├──data_semantics  
-|  ├──<Extract Real data here>  
+|  ├── (Extract Real data here)  
 ├──VKitti_classSeg  
-|  ├──<Extract vkitti_2.0.3_classSegmentation.tar here with command>  
+|  ├──(Extract vkitti_2.0.3_classSegmentation.tar here with command)  
 ├──VKitti_RGB  
-|  ├──<Extract vkitti_2.0.3_rgb.tar here with command>  
+|  ├──(Extract vkitti_2.0.3_rgb.tar here with command)  
 
 ## Renaming class segmented files in virtual datasets
 Run the rename_files.py in semanticKitti  
