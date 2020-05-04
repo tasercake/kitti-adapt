@@ -146,9 +146,6 @@ class KITTILoader(Dataset):
 
 			area = (box[3]-box[1]) * (box[2]-box[0])
 
-			# if area <= 500: continue
-
-
 			targets = dict()
 			targets['labels'] = label
 
