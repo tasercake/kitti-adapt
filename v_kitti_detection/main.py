@@ -109,9 +109,6 @@ def move_to(obj, device):
 		raise TypeError("Invalid type for move_to")
 
 
-
-
-
 def train( model, device , train_loader , optimizer, epochs, loss_func ):
 	'''
 	Function train is a function to train the model
@@ -382,39 +379,6 @@ def custom_training(train_loader, val_loader, test_dataset,test_images_paths, mo
 	- test_dataset : 
 	- test_images_path : 
 	'''
-
-	# load a pre-trained model for classification and return
-	# only the features
-	# backbone = torchvision.models.mobilenet_v2(pretrained=True).features
-	# # FasterRCNN needs to know the number of
-	# # output channels in a backbone. For mobilenet_v2, it's 1280
-	# # so we need to add it here
-	# backbone.out_channels = 1280
-
-	# # let's make the RPN generate 5 x 3 anchors per spatial
-	# # location, with 5 different sizes and 3 different aspect
-	# # ratios. We have a Tuple[Tuple[int]] because each feature
-	# # map could potentially have different sizes and
-	# # aspect ratios
-	# anchor_generator = AnchorGenerator(sizes=((32, 64, 128, 256, 512),),
-	#                                    aspect_ratios=((0.5, 1.0, 2.0),))
-
-	# # let's define what are the feature maps that we will
-	# # use to perform the region of interest cropping, as well as
-	# # the size of the crop after rescaling.
-	# # if your backbone returns a Tensor, featmap_names is expected to
-	# # be [0]. More generally, the backbone should return an
-	# # OrderedDict[Tensor], and in featmap_names you can choose which
-	# # feature maps to use.
-	# roi_pooler = torchvision.ops.MultiScaleRoIAlign(featmap_names=[0],
-	#                                                 output_size=7,
-	#                                                 sampling_ratio=2)
-
-	# # put the pieces together inside a FasterRCNN model
-	# model = FasterRCNN(backbone,
-	#                    num_classes=4,
-	#                    rpn_anchor_generator=anchor_generator,
-	#                    box_roi_pool=roi_pooler)
 	model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=True).to(device)
 
 	num_classes = 4
@@ -515,7 +479,10 @@ def create_dataset(image_paths, labels_path, info_paths, device):
 	Inputs:
 	- image_paths : list of the image paths
 	- labels_path : list of the labels paths (in this case is the bounding boxes)
-	- 
+	- info_paths : list of the info paths (image labels from the ids)
+
+	Output:
+	- Concatenated Dataset
 	'''
 
 	preprocess = transforms.Compose([transforms.ToTensor(),transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),])
