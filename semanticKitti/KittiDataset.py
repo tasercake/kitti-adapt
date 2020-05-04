@@ -1,4 +1,3 @@
-import glob
 import cv2
 import torch
 from torchvision.transforms import transforms
@@ -16,13 +15,7 @@ class KittiDataset(Dataset):
         :param colors_dic:
         :param transform:
         """
-        #        self.label_dir = label_dir
-        #         print("init kitti dataset")
         self.img_dir = img_dir
-        # self.org_images, self.org_attatched_filenames,self.org_image_filename = self.load_images_from_folder(img_dir)
-        # self.org_images = self.standardise_image_dims(label_dir)
-        # self.seg_images, self.seg_attatched_filenames,self.seg_image_filename = self.load_images_from_folder(label_dir)
-        # self.seg_images = self.standardise_image_dims(label_dir)
         self.org_image_filename = self.load_names_from_folder(img_dir)
         self.seg_image_filename = self.load_names_from_folder(label_dir)
 
